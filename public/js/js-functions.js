@@ -45,29 +45,30 @@ document.addEventListener('click', (e) => {
 
 const select = document.getElementById("offers_displayed");
 const jobOffers = document.querySelectorAll(".job_card");
+const searchInput = document.getElementById('search_content');
 
-function applyFilter(filter) {
+function applyFilters() {
+    const filter = select.value;
+    const term = searchInput.value.toLowerCase().trim();
     jobOffers.forEach((card) => {
         const status = card.dataset.status;
-        let visible = false;
+        const text = card.textContent.toLowerCase(); // récup l'ensemble des textes de la card
 
-        if (filter === "all") {
-            visible = true; // par défaut
-        } else if (filter === "visible_only") {
-            visible = (status === "visible"); // visible = true si statut = visible
-        } else if (filter === "applied_only") {
-            visible = status === "applied"; // visible = true si statut = applied
-        }
+        const matchFilter = filter === "all" || status === filter.replace("_only", "");
+        // si vaut all = true, sinon true si le filtre match le statut de la card
+        const matchSearch = term === "" || text.includes(term);
+        // vaut true si un des textes de la card comporte le terme recherché
 
-        card.classList.toggle("filtered_out", !visible); // si visible = false, applique class hidden
+        card.classList.toggle("filtered_out", !(matchFilter && matchSearch)); // si ne match pas les 2 filtres, disparait
     });
 }
 
 // Applique le filtre au chargement selon la valeur déjà sélectionnée
-applyFilter(select.value);
+applyFilters(select.value);
 
 // Puis à chaque changement
-select.addEventListener("change", (e) => applyFilter(e.target.value));
+select.addEventListener("change", applyFilters);
+searchInput.addEventListener("input", applyFilters);
 
 
 /* SCROLL VERS OFFRE SELECTIONNEE */

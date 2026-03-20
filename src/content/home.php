@@ -13,23 +13,29 @@ $visibleJobs = array_filter($allJobsArray, function($job) {
 });
 ?>
 
-<p>
-    <span id="visible_count"><?= count($visibleJobs) ?></span> offres visibles sur 
-    <span id="total_count"><?= count($allJobsArray) ?></span> offres.
-</p>
+<div id="parameters_bar">
+    <p>
+        <span id="visible_count"><?= count($visibleJobs) ?></span> offres visibles sur 
+        <span id="total_count"><?= count($allJobsArray) ?></span> offres.
+    </p>
+
+    <div id="search_bar">
+        <input type="text" id='search_content' placeholder="Entrez un titre ou un mot">
+    </div>
+
+    <div id="options_bar">
+        <label for="offers_displayed">Filtrer :</label>
+        <select id="offers_displayed" name="offers_displayed">
+            <option value="all">Toutes les offres</option>
+            <option value="visible_only" selected>Non-masquées</option>
+            <option value="applied_only">Postulées</option>
+        </select>
+    </div>
+</div>
 
 <!-- Fin du compteur d'offre -->
 
 <div id="job_board">
-
-<div id="options_bar">
-    <label for="offers_displayed">Afficher :</label>
-    <select id="offers_displayed" name="offers_displayed">
-        <option value="all">Toutes les offres</option>
-        <option value="visible_only" selected>Non-masquées</option>
-        <option value="applied_only">Postulées</option>
-    </select>
-</div>
 
     <?php $first = true ?>
     <?php foreach($allJobsArray as $job) : ?>

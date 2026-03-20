@@ -109,7 +109,7 @@ header {
   max-width: 100%;
   padding: 15px 20px;
   background-color: var(--color-primary);
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 header img {
@@ -150,7 +150,23 @@ footer {
     gap: 15px;
 }
 
-/* OPTIONS BAR */
+/* PARAMETERS BAR */
+
+#parameters_bar {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+#options_bar {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
 
 #options_bar select {
     appearance: none;
@@ -165,6 +181,23 @@ footer {
     background-size: 1em;
     font-family: unset; /* test */
 }
+
+#search_content {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
+#search_content:focus {
+    outline: none;
+    border-color: #666;
+}
+
+
+/* CARDS DES OFFRES */
 
 .job_card.hiddenOffer {
     display: none;
