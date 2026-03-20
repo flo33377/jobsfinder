@@ -41,15 +41,54 @@ document.addEventListener('click', (e) => {
 });
 
 
+/* REGEX - ECHAPPEMENT DES CARACTERES SPECIAUX */
+
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // $& => le caractère matché, on le réinjecte précédé d'un \ pour l'échapper
+}
+
+
 /* FILTRE DES OFFRES - Select */
 
 const select = document.getElementById("offers_displayed");
 const jobOffers = document.querySelectorAll(".job_card");
 const searchInput = document.getElementById('search_content');
+const visibleCount = document.getElementById('visible_count');
+
+function highlightTerm(card, term) { // met en surbrillance les termes du search
+    // cible tous les éléments texte de la card
+    const elements = card.querySelectorAll('h3, h4, h5, p');
+
+    elements.forEach(el => {
+        // sauvegarde le contenu original la première fois pour retirer le highlight
+        if (!el.dataset.original) {
+            el.dataset.original = el.innerHTML;
+        }
+
+        // restaure toujours d'abord
+        el.innerHTML = el.dataset.original;
+
+        // puis surbrille si un terme est présent
+        if (term.length > 1) { // évite de surbriller à chaque lettre dès le 1er caractère
+            const safeTerm = escapeRegex(term);
+            const regex = new RegExp(safeTerm, 'gi');
+            // g => global, toutes les occurences, pas que la première
+            // i => insensitive, insensible à la casse
+            el.innerHTML = el.dataset.original.replace(
+                regex,
+                match => `<span class="search_highlight">${match}</span>`
+            );
+        }
+    });
+};
 
 function applyFilters() {
+
     const filter = select.value;
     const term = searchInput.value.toLowerCase().trim();
+    let offersDisplayedCntr = 0;
+
     jobOffers.forEach((card) => {
         const status = card.dataset.status;
         const text = card.textContent.toLowerCase(); // récup l'ensemble des textes de la card
@@ -59,8 +98,14 @@ function applyFilters() {
         const matchSearch = term === "" || text.includes(term);
         // vaut true si un des textes de la card comporte le terme recherché
 
-        card.classList.toggle("filtered_out", !(matchFilter && matchSearch)); // si ne match pas les 2 filtres, disparait
+        const isVisible = matchFilter && matchSearch; // vaut true si les 2 sont à true
+        card.classList.toggle("filtered_out", !isVisible); // si ne match pas les 2 filtres, disparait
+        if(isVisible) offersDisplayedCntr ++;
+
+        highlightTerm(card, term); // déclenche le check de surbrillance
     });
+
+    visibleCount.textContent = offersDisplayedCntr;
 }
 
 // Applique le filtre au chargement selon la valeur déjà sélectionnée
@@ -69,6 +114,27 @@ applyFilters(select.value);
 // Puis à chaque changement
 select.addEventListener("change", applyFilters);
 searchInput.addEventListener("input", applyFilters);
+
+
+/* SYSTEME DE TRI PAR DATE */
+
+const sortSelect = document.getElementById("sort_offers");
+
+function applySort() {
+    const order = sortSelect.value;
+    const cards = Array.from(jobOffers);
+
+    cards.sort((a, b) => {
+        const dateA = new Date(a.dataset.date);
+        const dateB = new Date(b.dataset.date);
+        return order === "newest" ? dateB - dateA : dateA - dateB;
+    });
+
+    const jobBoard = document.getElementById('job_board');
+    cards.forEach(card => jobBoard.appendChild(card));
+}
+
+sortSelect.addEventListener("change", applySort);
 
 
 /* SCROLL VERS OFFRE SELECTIONNEE */

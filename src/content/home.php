@@ -24,13 +24,24 @@ $visibleJobs = array_filter($allJobsArray, function($job) {
     </div>
 
     <div id="options_bar">
-        <label for="offers_displayed">Filtrer :</label>
-        <select id="offers_displayed" name="offers_displayed">
-            <option value="all">Toutes les offres</option>
-            <option value="visible_only" selected>Non-masquées</option>
-            <option value="applied_only">Postulées</option>
-        </select>
+        <div>
+            <label for="offers_displayed">Filtrer :</label>
+            <select id="offers_displayed" name="offers_displayed">
+                <option value="all">Toutes les offres</option>
+                <option value="visible_only" selected>Non-masquées</option>
+                <option value="applied_only">Postulées</option>
+            </select>
+        </div>
+    
+        <div>
+            <label for="sort_offers">Trier par :</label>
+            <select id="sort_offers" name="sort_offers">
+                <option value="newest" selected>Plus récent</option>
+                <option value="oldest">Plus ancien</option>
+            </select>
+        </div>
     </div>
+
 </div>
 
 <!-- Fin du compteur d'offre -->
@@ -40,7 +51,7 @@ $visibleJobs = array_filter($allJobsArray, function($job) {
     <?php $first = true ?>
     <?php foreach($allJobsArray as $job) : ?>
         <!-- Card -->
-        <div class="job_card <?= $job["status"] ?>" data-status="<?= $job['status'] ?>" data-id="<?= $job['id'] ?>">
+        <div class="job_card <?= $job["status"] ?>" data-status="<?= $job['status'] ?>" data-id="<?= $job['id'] ?>" data-date="<?= $job['posted_at'] ?>">
 
             <input type="radio" id="<?= $job['source_id'] ?>-<?= $job['source'] ?>" name="focus" 
             <?php if($job['status'] === "visible" && $first) : ?> checked <?php $first = false; endif ?>>
