@@ -2,34 +2,39 @@
 
 // id DB
 include('envir/sqltable.php');
+include('envir/api.php');
 
 
 /* Fonction pour se connecter à la DB */
 
 function connect(): PDO { // se connecte à la DB local ou en prod
-    if($_SERVER["SERVER_PORT"] === "5000") {
-        // partie locale
-        $dbpath = __DIR__ . "/db/jobsfinder_jobs_local.db";
-        try {
+    try {
+        if(defined(('ENV') && ENV === 'local')) {
+            // partie locale
+            $dbpath = __DIR__ . "/db/jobsfinder_jobs_local.db";
             $mysqlClient = new PDO("sqlite:{$dbpath}");
-        } catch (Exception $e) {
-            echo 'Erreur : ' . $e->getMessage();
+        } else {
+            // partie prod
+                $mysqlClient = new PDO(DB_HOST, DB_ID, DB_PW);
         }
-    } else {
-        // partie prod
-        try {
-            $mysqlClient = new PDO(
-                DB_HOST,
-                DB_ID,
-                DB_PW
-            );
-        } catch(Exception $e) {
-            echo "Erreur : " . $e->getMessage();
-        }
-        }
-
-    return $mysqlClient;
+        return $mysqlClient;
+    
+    } catch(Exception $e) {
+        error_log("Connexion BDD échouée : " . $e->getMessage());
+        exit(0); // sortie sans echo ou erreur fatale 
+    }
 }
+
+/* Fonction(s) de debeug */
+
+// Ecriture des logs
+
+function writeLog($message) {
+    $logFile = __DIR__ . '/logs/cron.log';
+    $timestamp = date('Y-m-d H:i:s');
+    file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
+}
+
 
 /* Fonction(s) pour get des infos de la DB */
 

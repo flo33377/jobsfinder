@@ -11,8 +11,10 @@ include('mainFunctions.php');
 /* $index_cours = include_once('envir/index-cours.php'); // index des cours */
 
     // Session
-session_set_cookie_params(86400); // durée du cookie de session = 24h
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params(86400); // durée du cookie de session = 24h
+    session_start(); // ne démarre la session que s'il n'y en a pas encore
+}
 /* unset($_SESSION['access_granted']); */
 
 
