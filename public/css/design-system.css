@@ -231,7 +231,6 @@ footer {
 
 #details_options #details_options_content {
     max-height: 0;
-    overflow: hidden;
     transition: max-height 0.3s ease-in-out;
     /* max-height à l'ouverture => géré dynamiquement en JS */
 }

@@ -80,7 +80,7 @@ function cleanupJobsInDB() { // retire les offres de plus de 30j en DB
 
     // supprime les anciennes offres
     $sql = "DELETE FROM jobsfinder_jobs
-    WHERE posted_at < NOW() - INTERVAL 30 DAY";
+    WHERE posted_at < NOW() - INTERVAL 31 DAY";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute();

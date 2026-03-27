@@ -311,6 +311,9 @@ refreshBtn.addEventListener('click', async () => {
             reloadLink.href = '';
             reloadLink.textContent = 'Actualiser la page pour les voir';
             refreshBtn.insertAdjacentElement('afterend', reloadLink);
+            // augmente taille du bloc pour afficher
+            const blocContent = document.getElementById('details_options_content');
+            blocContent.style.maxHeight = content.scrollHeight + 'px';
         } else {
             refreshBtn.textContent = `Aucune nouvelle offre`;
             // réactive le bouton après 60 secondes
