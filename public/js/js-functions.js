@@ -49,6 +49,24 @@ function escapeRegex(string) {
 }
 
 
+/* AFFICHAGE DES FILTRES SUPP VIA DETAILS */
+
+const details = document.getElementById('details_options');
+const content = document.getElementById('details_options_content');
+const summary = details.querySelector('summary');
+
+summary.addEventListener('click', (e) => {
+    e.preventDefault(); // empêche le comportement natif
+    if (details.open) {
+        content.style.maxHeight = '0';
+        setTimeout(() => details.removeAttribute('open'), 300);
+    } else {
+        details.setAttribute('open', '');
+        content.style.maxHeight = content.scrollHeight + 'px';
+    }
+});
+
+
 /* FILTRE DES OFFRES - Select */
 
 const select = document.getElementById("offers_displayed");
@@ -188,6 +206,11 @@ function updateInDBOfferStatus(id, newStatus) {
             currentFilter === "visible_only" && 
             (newStatus === "hidden" || newStatus === "applied");
 
+        // Trouve la prochaine card visible dans le DOM pour aller l'ouvrir
+        const allCards = Array.from(document.querySelectorAll('.job_card:not(.filtered_out)'));
+        const currentIndex = allCards.indexOf(card);
+        const nextCard = allCards[currentIndex + 1];
+
         if (shouldDisappear) {
             // Animation de disparition puis mise à jour
             card.style.transition = "opacity 0.3s ease";
@@ -209,6 +232,12 @@ function updateInDBOfferStatus(id, newStatus) {
                     card.classList.add("filtered_out"); // masquage visuel séparé
                     // Remet les styles inline pour ne pas bloquer un futur réaffichage
                     card.style = "";
+
+                    // Ouvre la card suivante
+                    if (nextCard) {
+                    const radio = nextCard.querySelector('input[type="radio"]');
+                    if (radio) radio.checked = true;
+                    }
                 }, 400);
 
             }, 300);
@@ -230,6 +259,10 @@ function updateCardDOM(card, newStatus) {
     // 2. Met à jour la classe de la card
     card.classList.remove("visible", "hidden", "applied");
     card.classList.add(newStatus);
+
+    // Supprime le tag "new" si présent
+    const newTag = card.querySelector('.new_offer_tag'); // adapte le sélecteur à ta classe
+    if (newTag) newTag.remove();
 
     // 3. Met à jour le label de statut
     const statusLabels = { visible: "Visible", hidden: "Masquée", applied: "Postulée" };
@@ -256,5 +289,48 @@ function updateCardDOM(card, newStatus) {
 };
 
 
+/* Imports et cleanage manuels des offres via le bouton Refresh */
+
+const refreshBtn = document.getElementById('refresh_btn');
+
+refreshBtn.addEventListener('click', async () => {
+
+    // désactive le bouton et affiche l'animation
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = '<span class="spinner"></span> Recherche en cours...';
+
+    try {
+        const response = await fetch('./src/api/globalDBUpdate.php');
+        const data = await response.json();
+
+        const newOffers = data.inserted;
+        if(newOffers >= 1) {
+            refreshBtn.textContent = `✓ ${data.inserted} nouvelles offres trouvées`;
+            // ajoute un lien discret en dessous
+            const reloadLink = document.createElement('a');
+            reloadLink.href = '';
+            reloadLink.textContent = 'Actualiser la page pour les voir';
+            refreshBtn.insertAdjacentElement('afterend', reloadLink);
+        } else {
+            refreshBtn.textContent = `Aucune nouvelle offre`;
+            // réactive le bouton après 60 secondes
+            setTimeout(() => {
+                refreshBtn.textContent = "Rafraîchir les offres";
+                refreshBtn.disabled = false;
+            }, 60000);
+        }
+
+    } catch (error) {
+        refreshBtn.textContent = "Erreur lors de l'import";
+        console.error(error);
+
+        // réactive le bouton après 60 secondes
+        setTimeout(() => {
+        refreshBtn.textContent = "Rafraîchir les offres";
+        refreshBtn.disabled = false;
+    }, 60000);
+    }
+
+});
 
 

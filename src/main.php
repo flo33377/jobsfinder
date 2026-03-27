@@ -8,7 +8,6 @@ error_reporting(E_ALL);
 
     // dependancies
 include('mainFunctions.php');
-/* $index_cours = include_once('envir/index-cours.php'); // index des cours */
 
     // Session
 if (session_status() === PHP_SESSION_NONE) {

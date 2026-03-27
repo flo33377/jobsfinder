@@ -167,7 +167,8 @@ footer {
     gap: 10px;
 }
 
-#options_bar div {
+#options_bar > div, 
+#options_bar .filter {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -177,7 +178,7 @@ footer {
 
 #options_bar select {
     appearance: none;
-    background-color: transparent;
+    background-color: var(--color-bg);
     border: 1px solid #aaa;
     padding: 0.5em 2em 0.5em 1em;
     border-radius: 6px;
@@ -196,6 +197,7 @@ footer {
     border-radius: 6px;
     font-size: 0.95rem;
     box-sizing: border-box;
+    margin-top: 5px;
 }
 
 #search_content:focus {
@@ -207,6 +209,84 @@ footer {
     background-color: yellow;
     border-radius: 3px;
 
+}
+
+#details_options {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+}
+
+#details_options_content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+#details_options #details_options_content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+    /* max-height à l'ouverture => géré dynamiquement en JS */
+}
+
+summary {
+    list-style: none; /* retire le chevron par défaut */
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+summary::after {
+    content: "↓";
+    padding: 0 0 0 10px;
+    transition: all 0.2s ease;
+}
+
+details[open] summary::after {
+    transform: rotate(-180deg);
+    padding: 0 10px 0 0;
+}
+
+#manual_refresh_bloc {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#manual_refresh_bloc a {
+    text-decoration: underline;
+    padding: 10px 0;
+}
+
+#refresh_btn:disabled {
+    background-color: var(--color-subtext);
+    color: var(--color-bg);
+}
+
+    /* Animation spinner pendant le refresh manuel */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid #ccc;
+    border-top-color: var(--color-subtext);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
 }
 
 
@@ -238,6 +318,12 @@ footer {
 
     /* Etiquettes des status */
 
+.job_tags {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+
 .job_status {
     margin-top: 5px;
     padding: 2px 5px;
@@ -267,7 +353,14 @@ footer {
     background-color: #3356D2;
 }
 
+.job_card.visible .new_offer_tag {
+    background-color: yellow;
+    color: black;
+    border: 1px solid rgba(179, 179, 181, 0.6);
+}
+
     /* Fin d'étiquettes des status */
+
 
 .job_card.filtered_out {
     display: none;
@@ -295,8 +388,8 @@ footer {
     gap: 10px;
 }
 
-.infos .action_btn a, 
-.infos .action_btn button {
+.main_cta, 
+.second_cta {
     padding: 10px;
     background-color: var(--color-tertiary);
     color: white;
@@ -305,7 +398,7 @@ footer {
     text-align: center;
 }
 
-.infos .action_btn button {
+.second_cta {
     background-color: white;
     color: var(--color-tertiary);
     border: 2px solid var(--color-tertiary);

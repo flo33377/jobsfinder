@@ -19,12 +19,8 @@ $visibleJobs = array_filter($allJobsArray, function($job) {
         <span id="total_count"><?= count($allJobsArray) ?></span> offres.
     </p>
 
-    <div id="search_bar">
-        <input type="text" id='search_content' placeholder="Entrez un titre ou un mot">
-    </div>
-
     <div id="options_bar">
-        <div>
+        <div class="filter">
             <label for="offers_displayed">Filtrer :</label>
             <select id="offers_displayed" name="offers_displayed">
                 <option value="all">Toutes les offres</option>
@@ -32,14 +28,30 @@ $visibleJobs = array_filter($allJobsArray, function($job) {
                 <option value="applied_only">Postulées</option>
             </select>
         </div>
-    
-        <div>
-            <label for="sort_offers">Trier par :</label>
-            <select id="sort_offers" name="sort_offers">
-                <option value="newest" selected>Plus récent</option>
-                <option value="oldest">Plus ancien</option>
-            </select>
-        </div>
+
+        <details id="details_options">
+            <summary>Plus d'options</summary>
+            <div id="details_options_content">
+
+                <div id="search_bar">
+                    <p>Rechercher :</p>
+                    <input type="text" id='search_content' placeholder="Entrez un titre ou un mot">
+                </div>
+            
+                <div class="filter">
+                    <label for="sort_offers">Trier par :</label>
+                    <select id="sort_offers" name="sort_offers">
+                        <option value="newest" selected>Plus récent</option>
+                        <option value="oldest">Plus ancien</option>
+                    </select>
+                </div>
+
+                <div class="action_btn" id="manual_refresh_bloc">
+                    <button type="button" class="main_cta" id="refresh_btn">Rafraîchir l'import</button>
+                </div>
+
+            </div>
+        </details>
     </div>
 
 </div>
@@ -66,14 +78,21 @@ $visibleJobs = array_filter($allJobsArray, function($job) {
                 <?php endif ?>
 
                 <!-- Etiquette de la card -->
-                <div class="job_status">
-                    <?php switch($job['status']) {
-                        case "visible" : echo "Visible"; break;
-                        case "hidden" : echo "Masquée"; break;
-                        case "applied" : echo "Postulée"; break;
-                        default : echo "Visible"; break;
-                    } ?>
+                <div class="job_tags">
+                    <div class="job_status">
+                        <?php switch($job['status']) {
+                            case "visible" : echo "Visible"; break;
+                            case "hidden" : echo "Masquée"; break;
+                            case "applied" : echo "Postulée"; break;
+                            default : echo "Visible"; break;
+                        } ?>
+                    </div>
+
+                    <?php if($job['new'] == "true") : ?>
+                        <p class="job_status new_offer_tag">New</p>
+                    <?php endif ?>
                 </div>
+
             </label>
 
             <!-- Infos supp de l'annonce -->
@@ -83,14 +102,14 @@ $visibleJobs = array_filter($allJobsArray, function($job) {
                 <?= mb_strlen($job['description'], 'UTF-8') > 800 ? '...' : '' ?></p>
 
                 <div class="action_btn">
-                    <a href="<?= $job['url'] ?>" target="_blank">Voir l'annonce</a>
+                    <a href="<?= $job['url'] ?>" target="_blank" class="main_cta">Voir l'annonce</a>
                     <?php if($job['status'] == "visible") : ?>
-                        <button type="button" onclick="updateInDBOfferStatus('<?= $job['id'] ?>', 'hidden')">Masquer l'offre</button>
+                        <button type="button" onclick="updateInDBOfferStatus('<?= $job['id'] ?>', 'hidden')" class="second_cta">Masquer l'offre</button>
                     <?php elseif($job['status'] == "hidden") : ?>
-                        <button type="button" onclick="updateInDBOfferStatus('<?= $job['id'] ?>', 'visible')">Ne plus masquer</button>
+                        <button type="button" onclick="updateInDBOfferStatus('<?= $job['id'] ?>', 'visible')" class="second_cta">Ne plus masquer</button>
                     <?php endif ?>
                     <?php if($job['status'] == "visible") : ?>
-                        <button type="button" onclick="updateInDBOfferStatus('<?= $job['id'] ?>', 'applied')">J'ai postulé</button>
+                        <button type="button" onclick="updateInDBOfferStatus('<?= $job['id'] ?>', 'applied')" class="second_cta">J'ai postulé</button>
                     <?php endif ?>
                 </div>
             </div>
