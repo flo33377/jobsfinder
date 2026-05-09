@@ -41,12 +41,67 @@ document.addEventListener('click', (e) => {
 });
 
 
+/* Affichage du menu */
+
+let menuButton = document.getElementById("menu_button");
+let burgerMenu = document.getElementById("burger_menu");
+
+if(menuButton) {
+    menuButton.addEventListener("click", () => {
+    let rect = menuButton.getBoundingClientRect();
+    burgerMenu.style.position = "fixed";
+    burgerMenu.style.top = rect.bottom + "px";   // sous le bouton
+    burgerMenu.style.left = rect.left + "px";    // aligné à gauche du bouton
+    burgerMenu.classList.toggle("open");
+    });
+
+    // ferme le menu en cas de clic en dehors
+    document.addEventListener('click', (e) => {
+        // si le menu est fermé, rien à faire
+        if (!burgerMenu.classList.contains('open')) return;
+    
+        // si le clic est ni dans le menu ni sur le bouton -> fermer
+        const clickInsideMenu   = burgerMenu.contains(e.target);
+        const clickOnMenuButton = menuButton.contains(e.target);
+    
+        if (!clickInsideMenu && !clickOnMenuButton) {
+        burgerMenu.classList.remove('open');
+        }
+    });
+    
+    // fermer avec Échap (accessibilité)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') burgerMenu.classList.remove('open');
+    });
+}
+
+
 /* REGEX - ECHAPPEMENT DES CARACTERES SPECIAUX */
 
 function escapeRegex(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // $& => le caractère matché, on le réinjecte précédé d'un \ pour l'échapper
 }
+
+
+/* BOUTON DE RETOUR VERS LE HAUT */
+
+    /* Fonctionnement */
+
+document.getElementById('btn_up').addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+    /* Affiché uniquement quand déjà scrollé */
+
+window.addEventListener('scroll', () => {
+    const btn = document.getElementById('btn_up');
+    if (window.scrollY > 50) {
+        btn.classList.add('visible');
+    } else {
+        btn.classList.remove('visible');
+    }
+});
 
 
 /* AFFICHAGE DES FILTRES SUPP VIA DETAILS */
@@ -59,10 +114,12 @@ summary.addEventListener('click', (e) => {
     e.preventDefault(); // empêche le comportement natif
     if (details.open) {
         content.style.maxHeight = '0';
+        content.style.opacity = '0';
         setTimeout(() => details.removeAttribute('open'), 300);
     } else {
         details.setAttribute('open', '');
         content.style.maxHeight = content.scrollHeight + 'px';
+        setTimeout(() => content.style.opacity = '1', 300);
     }
 });
 
@@ -210,6 +267,9 @@ function updateInDBOfferStatus(id, newStatus) {
         const allCards = Array.from(document.querySelectorAll('.job_card:not(.filtered_out)'));
         const currentIndex = allCards.indexOf(card);
         const nextCard = allCards[currentIndex + 1];
+        // s'il y a une prochaine card, nextCard vaut quelque chose => cardToOpenNext prend sa valeur
+        // si pas de prochaine card, nextCard vaut null ou undefined et donc prend la valeur de fallback (la 2e)
+        const cardToOpenNext = nextCard || allCards[currentIndex - 1];
 
         if (shouldDisappear) {
             // Animation de disparition puis mise à jour
@@ -234,8 +294,8 @@ function updateInDBOfferStatus(id, newStatus) {
                     card.style = "";
 
                     // Ouvre la card suivante
-                    if (nextCard) {
-                    const radio = nextCard.querySelector('input[type="radio"]');
+                    if (cardToOpenNext) {
+                    const radio = cardToOpenNext.querySelector('input[type="radio"]');
                     if (radio) radio.checked = true;
                     }
                 }, 400);
@@ -272,11 +332,11 @@ function updateCardDOM(card, newStatus) {
     const actionBtn = card.querySelector(".action_btn");
     const buttonsHTML = {
         visible: `
-            <button type="button" onclick="updateInDBOfferStatus('${card.dataset.id}', 'hidden')">Masquer l'offre</button>
-            <button type="button" onclick="updateInDBOfferStatus('${card.dataset.id}', 'applied')">J'ai postulé</button>
+            <button type="button" class="second_cta" onclick="updateInDBOfferStatus('${card.dataset.id}', 'hidden')">Masquer l'offre</button>
+            <button type="button" class="second_cta" onclick="updateInDBOfferStatus('${card.dataset.id}', 'applied')">J'ai postulé</button>
         `,
         hidden: `
-            <button type="button" onclick="updateInDBOfferStatus('${card.dataset.id}', 'visible')">Ne plus masquer</button>
+            <button type="button" class="second_cta" onclick="updateInDBOfferStatus('${card.dataset.id}', 'visible')">Ne plus masquer</button>
         `,
         applied: ``
     };
@@ -291,6 +351,24 @@ function updateCardDOM(card, newStatus) {
 
 /* Imports et cleanage manuels des offres via le bouton Refresh */
 
+    // set l'API WakeLock pour empêcher le verrouillage de l'écran pendant l'import
+let wakeLock = null;
+
+async function requestWakeLock() {
+    try {
+        wakeLock = await navigator.wakeLock.request('screen');
+    } catch (err) {
+        console.log('Wake Lock non disponible : ', err);
+    }
+}
+
+function releaseWakeLock() {
+    if (wakeLock) {
+        wakeLock.release();
+        wakeLock = null;
+    }
+}
+
 const refreshBtn = document.getElementById('refresh_btn');
 
 refreshBtn.addEventListener('click', async () => {
@@ -298,6 +376,8 @@ refreshBtn.addEventListener('click', async () => {
     // désactive le bouton et affiche l'animation
     refreshBtn.disabled = true;
     refreshBtn.innerHTML = '<span class="spinner"></span> Recherche en cours...';
+
+    await requestWakeLock(); // empêche le verrouillage d'écran
 
     try {
         const response = await fetch('./src/api/globalDBUpdate.php');
@@ -320,7 +400,7 @@ refreshBtn.addEventListener('click', async () => {
             setTimeout(() => {
                 refreshBtn.textContent = "Rafraîchir les offres";
                 refreshBtn.disabled = false;
-            }, 60000);
+            }, 20000);
         }
 
     } catch (error) {
@@ -331,7 +411,9 @@ refreshBtn.addEventListener('click', async () => {
         setTimeout(() => {
         refreshBtn.textContent = "Rafraîchir les offres";
         refreshBtn.disabled = false;
-    }, 60000);
+    }, 20000);
+    } finally {
+        releaseWakeLock(); // retire le blocage du verrouillage d'écran
     }
 
 });

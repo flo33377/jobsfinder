@@ -1,0 +1,27 @@
+[
+    {
+        "date": "2026-04-27 08:55:00",
+        "sources": {
+            "adzuna": [
+                {"keyword": "chef de projet digital", "code": 200, "results": 45},
+                {"keyword": "chef de projet web", "code": 204, "results": 0}
+            ],
+            "france_travail": [
+                {"keyword": "chef de projet digital", "code": 200, "results": 20},
+                {"keyword": "chef de projet web", "code": 200, "results": 12}
+            ]
+        }
+    },
+    {
+        "date": "2026-04-26 08:55:00",
+        "sources": {
+            "adzuna": [
+                {"keyword": "chef de projet digital", "code": 200, "results": 30}
+            ],
+            "france_travail": [
+                {"keyword": "chef de projet digital", "code": 200, "results": 18}
+            ]
+        }
+    }
+]
+

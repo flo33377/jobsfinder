@@ -72,9 +72,14 @@ $visibleJobs = array_filter($allJobsArray, function($job) {
             <label for="<?= $job['source_id'] ?>-<?= $job['source'] ?>">
                 <!-- Contenu affiché par defaut -->
                 <h3><?= $job['title'] ?></h3>
-                <h4><?= $job['company'] ?> - <?= $job['location'] ?></h4>
+
+                <h4><?= $job['company'] ?>
+                <?php if($job['company'] && $job['location']) : ?> - 
+                <?php endif ?>
+                <?= $job['location'] ?></h4>
+
                 <?php if($job['posted_at']) : ?>
-                    <h5>Posté le <?= $job['posted_at'] ?></h5>
+                    <h5><?= formatPostedAt($job['posted_at']) ?></h5>
                 <?php endif ?>
 
                 <!-- Etiquette de la card -->
@@ -116,5 +121,11 @@ $visibleJobs = array_filter($allJobsArray, function($job) {
         </div>
 
     <?php endforeach ?>
+</div>
+
+<div id="btn_up">
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M13 30L25 18L37 30" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
 </div>
 

@@ -48,6 +48,19 @@ function getAllJobs() : array { // renvoie toutes les jobs en BDD
     return $stmtGetAllJobs->fetchAll();
 }
 
+function formatPostedAt(string $postedAt): string { // renvoie un meilleur format 
+    // pour la date de publication des offres
+    $posted = new DateTime($postedAt);
+    $now = new DateTime();
+    $diff = $now->diff($posted)->days;
+
+    if ($diff === 0) return "Postée aujourd'hui";
+    if ($diff === 1) return "Postée il y a 1 jour";
+    if ($diff <= 3) return "Postée il y a {$diff} jours";
+    
+    return "Postée le " . $posted->format('d/m');
+}
+
 
 /* Fonction(s) pour update des choses en DB */
 

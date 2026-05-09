@@ -25,6 +25,12 @@ define("BASE_URL", ($_SERVER["SERVER_PORT"] === "5000") ? "http://localhost:5000
 // Home = Page d'accueil
 define("HOME", __DIR__ . "/content/home.php");
 
+// CV_STORAGE = Bibliothèque de CV
+define("CV_STORAGE", __DIR__ . "/content/cv_storage.php");
+
+// LOG_DIARY = Journal de log
+define("LOG_DIARY", __DIR__ . "/content/log_diary.php");
+
 
 
     // Variables de pages
@@ -48,13 +54,11 @@ switch ($method) {
         break;
 
     case "GET":
-        if(isset($_GET['cours']) && ($_GET['cours'] != null)) { // tentative d'accès à un cours
-            $page = "display_courses" ;
-            $requested_course = $_GET['cours'];
+        if(isset($_GET['mode']) && ($_GET['mode'] === "cv_storage")) { // accès à la biblio de cv
+            $page = "cv_storage" ;
         }
-        if(isset($_GET['summary']) && ($_GET['summary'] != null)) { // tentative d'accès au sommaire d'un cours
-            $page = "display_summary" ;
-            $requested_course = $_GET['summary'];
+        if(isset($_GET['mode']) && ($_GET['mode'] === "log_diary")) { // tentative d'accès au sommaire d'un cours
+            $page = "log_diary" ;
         }
         break;
 }
@@ -66,6 +70,14 @@ switch($page){
     case "home" : // cas par défaut => HP du site
         $content = HOME;
         $allJobsArray = getAllJobs();
+        break;
+    
+    case "cv_storage" : // affichage de la page consultation des cv
+        $content = CV_STORAGE;
+        break;
+    
+    case "log_diary" : // affichage du journal de log
+        $content = LOG_DIARY;
         break;
 }
 

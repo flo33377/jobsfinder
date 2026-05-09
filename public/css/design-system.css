@@ -112,6 +112,13 @@ header {
   margin-bottom: 20px;
 }
 
+header svg {
+    height: 40px;
+    width: fit-content;
+    fill: white;
+    cursor: pointer;
+}
+
 header img {
   height: 40px;
   filter: brightness(0) invert(1);
@@ -127,6 +134,47 @@ header img {
 #title_header {
     text-transform: uppercase;
     color: white;
+}
+
+
+/* MENU */
+
+#burger_menu {
+    display: none;
+    align-self: flex-start;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    z-index: 1000;
+    border: 1px solid var(--color-primary);
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+}
+
+#burger_menu.open {
+    display: flex;
+    flex-direction: column;
+}
+
+#burger_menu .menu_item {
+    padding: 15px;
+    border-bottom: 1px solid var(--color-primary);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+}
+
+#burger_menu .menu_item:hover {
+    background-color: var(--color-primary);
+    color: var(--color-bg);
+}
+
+#burger_menu .menu_info {
+    padding: 2px 5px;
+    border-radius: 15px;
+    background-color: var(--color-primary);
+    color: white;
+    text-transform: uppercase;
+    font-size: small;
 }
 
 
@@ -307,7 +355,7 @@ details[open] summary::after {
 /* Case mobile */
 @media screen and (max-width: 767px) {
     .job_card {
-        width: 90%;;
+        width: 90%;
     }
 }
 
@@ -403,4 +451,92 @@ details[open] summary::after {
     border: 2px solid var(--color-tertiary);
 }
 
+    /* Bouton de retour en haut */
+
+#btn_up {
+    padding: 0;
+    background-color: var(--color-tertiary);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: 20px; right: 20px;
+    border: 2px solid var(--color-bg);
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+    cursor: pointer;
+
+    /* param quand masqué */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#btn_up.visible { /* param quand visible */
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#btn_up svg {
+    height: 30px;
+    width: 30px;
+}
+
+#btn_up svg path {
+    stroke: var(--color-bg);
+}
+
+/* LOG DIARY */
+
+#log_diary {
+    font-family: 'Courier New', Courier, monospace;
+    margin-top: 15px;
+    background-color: black;
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+    width: 90%;
+}
+
+#log_diary h3 {
+    color: limegreen;
+    margin-top: 10px;
+}
+
+#log_diary h4 {
+    color: #DDAA42;
+}
+
+.log_code {
+    color: cornflowerblue;
+}
+
+
+/* CV Storage */
+
+h1.subpage_title {
+    margin-bottom: 25px;
+}
+
+.cv_storage_cta {
+    margin: 10px 0 50px 0;
+}
+
+.cv_downloader_container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 80%;
+}
+
+.cv_downloader_title {
+    text-decoration: underline;
+    transition: all 0.2s ease-in-out;
+}
+
+.cv_downloader_title:hover {
+    color: var(--color-tertiary);
+}
 
