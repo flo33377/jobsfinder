@@ -35,6 +35,19 @@ function writeLog($message) {
     file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
 }
 
+/* Fonctions d'authentification */
+
+function getUserByEmail(string $email) { // retourne les infos d'un user s'il existe en base 
+    $SQLGetUserByEmail = "SELECT user_id, user_email FROM jobsfinder_users 
+    WHERE user_email = :user_email";
+    $pdo = connect();
+    $stmtGetUserByEmail = $pdo->prepare($SQLGetUserByEmail);
+    $stmtGetUserByEmail->execute([
+        'user_email' => $email
+    ]);
+
+    return $stmtGetUserByEmail->fetch();
+}
 
 /* Fonction(s) pour get des infos de la DB */
 

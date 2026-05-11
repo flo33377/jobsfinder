@@ -98,6 +98,12 @@ h3 {
     text-transform: uppercase;
 }
 
+.framed_content {
+    border: 2px solid var(--color-tertiary);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+}
 
 /* HEADER */
 
@@ -185,6 +191,64 @@ footer {
     padding-bottom: 10px;
     text-align: center;
 }
+
+
+/* PAGE DE LOGIN */
+
+.error_message {
+    text-align: center;
+    color: red;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.error_message a {
+    width: fit-content;
+}
+
+.login_page {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 90%;
+    gap: 10px;
+}
+
+.login_main_content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+    border: 0;
+    background: #39c0ed;
+    background: linear-gradient(70deg,rgba(57, 192, 237, 1), rgba(107, 33, 214, 1));
+}
+
+.login_main_content a {
+    color: var(--color-tertiary);
+    background-color: var(--color-bg);
+}
+
+.login_page p, 
+.login_page ul {
+    font-size: 0.9em;
+    color: var(--color-subtext);
+}
+
+.login_page a {
+    margin: 10px 0;
+}
+
+.login_page ul {
+    list-style: inside circle;
+    margin-left: 10px;
+}
+
 
 
 /* HP */
@@ -436,19 +500,29 @@ details[open] summary::after {
 }
 
 .main_cta, 
-.second_cta {
+.second_cta, 
+.third_cta {
     padding: 10px;
-    background-color: var(--color-tertiary);
-    color: white;
     border-radius: 10px;
     box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
     text-align: center;
+}
+
+.main_cta {
+    background-color: var(--color-tertiary);
+    color: white;
 }
 
 .second_cta {
     background-color: white;
     color: var(--color-tertiary);
     border: 2px solid var(--color-tertiary);
+}
+
+.third_cta {
+    color: var(--color-tertiary);
+    text-decoration: underline;
+    box-shadow: none;
 }
 
     /* Bouton de retour en haut */

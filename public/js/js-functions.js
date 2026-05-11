@@ -88,9 +88,12 @@ function escapeRegex(string) {
 
     /* Fonctionnement */
 
-document.getElementById('btn_up').addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-});
+let btnUp = document.getElementById('btn_up')
+if(btnUp) {
+    document.getElementById('btn_up').addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
 
     /* Affiché uniquement quand déjà scrollé */
 
@@ -108,108 +111,113 @@ window.addEventListener('scroll', () => {
 
 const details = document.getElementById('details_options');
 const content = document.getElementById('details_options_content');
-const summary = details.querySelector('summary');
+if(details && content) {
+    const summary = details.querySelector('summary');
 
-summary.addEventListener('click', (e) => {
-    e.preventDefault(); // empêche le comportement natif
-    if (details.open) {
-        content.style.maxHeight = '0';
-        content.style.opacity = '0';
-        setTimeout(() => details.removeAttribute('open'), 300);
-    } else {
-        details.setAttribute('open', '');
-        content.style.maxHeight = content.scrollHeight + 'px';
-        setTimeout(() => content.style.opacity = '1', 300);
-    }
-});
+    summary.addEventListener('click', (e) => {
+        e.preventDefault(); // empêche le comportement natif
+        if (details.open) {
+            content.style.maxHeight = '0';
+            content.style.opacity = '0';
+            setTimeout(() => details.removeAttribute('open'), 300);
+        } else {
+            details.setAttribute('open', '');
+            content.style.maxHeight = content.scrollHeight + 'px';
+            setTimeout(() => content.style.opacity = '1', 300);
+        }
+    });
+}
 
 
 /* FILTRE DES OFFRES - Select */
 
 const select = document.getElementById("offers_displayed");
-const jobOffers = document.querySelectorAll(".job_card");
-const searchInput = document.getElementById('search_content');
-const visibleCount = document.getElementById('visible_count');
+if(select) {
+    const jobOffers = document.querySelectorAll(".job_card");
+    const searchInput = document.getElementById('search_content');
+    const visibleCount = document.getElementById('visible_count');
 
-function highlightTerm(card, term) { // met en surbrillance les termes du search
-    // cible tous les éléments texte de la card
-    const elements = card.querySelectorAll('h3, h4, h5, p');
+    function highlightTerm(card, term) { // met en surbrillance les termes du search
+        // cible tous les éléments texte de la card
+        const elements = card.querySelectorAll('h3, h4, h5, p');
 
-    elements.forEach(el => {
-        // sauvegarde le contenu original la première fois pour retirer le highlight
-        if (!el.dataset.original) {
-            el.dataset.original = el.innerHTML;
-        }
+        elements.forEach(el => {
+            // sauvegarde le contenu original la première fois pour retirer le highlight
+            if (!el.dataset.original) {
+                el.dataset.original = el.innerHTML;
+            }
 
-        // restaure toujours d'abord
-        el.innerHTML = el.dataset.original;
+            // restaure toujours d'abord
+            el.innerHTML = el.dataset.original;
 
-        // puis surbrille si un terme est présent
-        if (term.length > 1) { // évite de surbriller à chaque lettre dès le 1er caractère
-            const safeTerm = escapeRegex(term);
-            const regex = new RegExp(safeTerm, 'gi');
-            // g => global, toutes les occurences, pas que la première
-            // i => insensitive, insensible à la casse
-            el.innerHTML = el.dataset.original.replace(
-                regex,
-                match => `<span class="search_highlight">${match}</span>`
-            );
-        }
-    });
-};
+            // puis surbrille si un terme est présent
+            if (term.length > 1) { // évite de surbriller à chaque lettre dès le 1er caractère
+                const safeTerm = escapeRegex(term);
+                const regex = new RegExp(safeTerm, 'gi');
+                // g => global, toutes les occurences, pas que la première
+                // i => insensitive, insensible à la casse
+                el.innerHTML = el.dataset.original.replace(
+                    regex,
+                    match => `<span class="search_highlight">${match}</span>`
+                );
+            }
+        });
+    };
 
-function applyFilters() {
+    function applyFilters() {
 
-    const filter = select.value;
-    const term = searchInput.value.toLowerCase().trim();
-    let offersDisplayedCntr = 0;
+        const filter = select.value;
+        const term = searchInput.value.toLowerCase().trim();
+        let offersDisplayedCntr = 0;
 
-    jobOffers.forEach((card) => {
-        const status = card.dataset.status;
-        const text = card.textContent.toLowerCase(); // récup l'ensemble des textes de la card
+        jobOffers.forEach((card) => {
+            const status = card.dataset.status;
+            const text = card.textContent.toLowerCase(); // récup l'ensemble des textes de la card
 
-        const matchFilter = filter === "all" || status === filter.replace("_only", "");
-        // si vaut all = true, sinon true si le filtre match le statut de la card
-        const matchSearch = term === "" || text.includes(term);
-        // vaut true si un des textes de la card comporte le terme recherché
+            const matchFilter = filter === "all" || status === filter.replace("_only", "");
+            // si vaut all = true, sinon true si le filtre match le statut de la card
+            const matchSearch = term === "" || text.includes(term);
+            // vaut true si un des textes de la card comporte le terme recherché
 
-        const isVisible = matchFilter && matchSearch; // vaut true si les 2 sont à true
-        card.classList.toggle("filtered_out", !isVisible); // si ne match pas les 2 filtres, disparait
-        if(isVisible) offersDisplayedCntr ++;
+            const isVisible = matchFilter && matchSearch; // vaut true si les 2 sont à true
+            card.classList.toggle("filtered_out", !isVisible); // si ne match pas les 2 filtres, disparait
+            if(isVisible) offersDisplayedCntr ++;
 
-        highlightTerm(card, term); // déclenche le check de surbrillance
-    });
+            highlightTerm(card, term); // déclenche le check de surbrillance
+        });
 
-    visibleCount.textContent = offersDisplayedCntr;
+        visibleCount.textContent = offersDisplayedCntr;
+    }
+
+    // Applique le filtre au chargement selon la valeur déjà sélectionnée
+    applyFilters(select.value);
+
+    // Puis à chaque changement
+    select.addEventListener("change", applyFilters);
+    searchInput.addEventListener("input", applyFilters);
 }
-
-// Applique le filtre au chargement selon la valeur déjà sélectionnée
-applyFilters(select.value);
-
-// Puis à chaque changement
-select.addEventListener("change", applyFilters);
-searchInput.addEventListener("input", applyFilters);
-
 
 /* SYSTEME DE TRI PAR DATE */
 
 const sortSelect = document.getElementById("sort_offers");
 
-function applySort() {
-    const order = sortSelect.value;
-    const cards = Array.from(jobOffers);
+if(sortSelect) {
+    function applySort() {
+        const order = sortSelect.value;
+        const cards = Array.from(jobOffers);
 
-    cards.sort((a, b) => {
-        const dateA = new Date(a.dataset.date);
-        const dateB = new Date(b.dataset.date);
-        return order === "newest" ? dateB - dateA : dateA - dateB;
-    });
+        cards.sort((a, b) => {
+            const dateA = new Date(a.dataset.date);
+            const dateB = new Date(b.dataset.date);
+            return order === "newest" ? dateB - dateA : dateA - dateB;
+        });
 
-    const jobBoard = document.getElementById('job_board');
-    cards.forEach(card => jobBoard.appendChild(card));
+        const jobBoard = document.getElementById('job_board');
+        cards.forEach(card => jobBoard.appendChild(card));
+    }
+
+    sortSelect.addEventListener("change", applySort);
 }
-
-sortSelect.addEventListener("change", applySort);
 
 
 /* SCROLL VERS OFFRE SELECTIONNEE */
@@ -321,7 +329,7 @@ function updateCardDOM(card, newStatus) {
     card.classList.add(newStatus);
 
     // Supprime le tag "new" si présent
-    const newTag = card.querySelector('.new_offer_tag'); // adapte le sélecteur à ta classe
+    const newTag = card.querySelector('.new_offer_tag'); // adapte le sélecteur à la classe
     if (newTag) newTag.remove();
 
     // 3. Met à jour le label de statut
@@ -370,52 +378,53 @@ function releaseWakeLock() {
 }
 
 const refreshBtn = document.getElementById('refresh_btn');
+if(refreshBtn) {
+    refreshBtn.addEventListener('click', async () => {
 
-refreshBtn.addEventListener('click', async () => {
+        // désactive le bouton et affiche l'animation
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<span class="spinner"></span> Recherche en cours...';
 
-    // désactive le bouton et affiche l'animation
-    refreshBtn.disabled = true;
-    refreshBtn.innerHTML = '<span class="spinner"></span> Recherche en cours...';
+        await requestWakeLock(); // empêche le verrouillage d'écran
 
-    await requestWakeLock(); // empêche le verrouillage d'écran
+        try {
+            const response = await fetch('./src/api/globalDBUpdate.php');
+            const data = await response.json();
 
-    try {
-        const response = await fetch('./src/api/globalDBUpdate.php');
-        const data = await response.json();
+            const newOffers = data.inserted;
+            if(newOffers >= 1) {
+                refreshBtn.textContent = `✓ ${data.inserted} nouvelles offres trouvées`;
+                // ajoute un lien discret en dessous
+                const reloadLink = document.createElement('a');
+                reloadLink.href = '';
+                reloadLink.textContent = 'Actualiser la page pour les voir';
+                refreshBtn.insertAdjacentElement('afterend', reloadLink);
+                // augmente taille du bloc pour afficher
+                const blocContent = document.getElementById('details_options_content');
+                blocContent.style.maxHeight = content.scrollHeight + 'px';
+            } else {
+                refreshBtn.textContent = `Aucune nouvelle offre`;
+                // réactive le bouton après 60 secondes
+                setTimeout(() => {
+                    refreshBtn.textContent = "Rafraîchir les offres";
+                    refreshBtn.disabled = false;
+                }, 20000);
+            }
 
-        const newOffers = data.inserted;
-        if(newOffers >= 1) {
-            refreshBtn.textContent = `✓ ${data.inserted} nouvelles offres trouvées`;
-            // ajoute un lien discret en dessous
-            const reloadLink = document.createElement('a');
-            reloadLink.href = '';
-            reloadLink.textContent = 'Actualiser la page pour les voir';
-            refreshBtn.insertAdjacentElement('afterend', reloadLink);
-            // augmente taille du bloc pour afficher
-            const blocContent = document.getElementById('details_options_content');
-            blocContent.style.maxHeight = content.scrollHeight + 'px';
-        } else {
-            refreshBtn.textContent = `Aucune nouvelle offre`;
+        } catch (error) {
+            refreshBtn.textContent = "Erreur lors de l'import";
+            console.error(error);
+
             // réactive le bouton après 60 secondes
             setTimeout(() => {
-                refreshBtn.textContent = "Rafraîchir les offres";
-                refreshBtn.disabled = false;
-            }, 20000);
+            refreshBtn.textContent = "Rafraîchir les offres";
+            refreshBtn.disabled = false;
+        }, 20000);
+        } finally {
+            releaseWakeLock(); // retire le blocage du verrouillage d'écran
         }
 
-    } catch (error) {
-        refreshBtn.textContent = "Erreur lors de l'import";
-        console.error(error);
-
-        // réactive le bouton après 60 secondes
-        setTimeout(() => {
-        refreshBtn.textContent = "Rafraîchir les offres";
-        refreshBtn.disabled = false;
-    }, 20000);
-    } finally {
-        releaseWakeLock(); // retire le blocage du verrouillage d'écran
-    }
-
-});
+    });
+}
 
 
