@@ -1,243 +1,4 @@
 
-/* FONCTIONNEMENT DES POP UP */
-
-document.addEventListener('click', (e) => {
-    // écoute chaque clic sur le DOM
-    const trigger = e.target.closest('[data-popup-id]');
-    // quand clic, remonte les éléments du DOM au niveau du clic pour voir si
-    // lui ou un parent à l'attribut data-popup-id
-    if (!trigger) return;
-    // si non, ne va pas plus loin
-
-    const popupId = trigger.dataset.popupId;
-    const popup = document.getElementById(popupId);
-    // récup la data et trouve la popup avec
-
-    if (!popup) {
-        console.warn(`Popup introuvable : ${popupId}`);
-        return;
-        // si popup n'existe pas, avertissement console et stop
-    }
-
-    // si clic lié à popup et popup existe :
-        popup.showModal();
-        popup.style.top = `${(window.innerHeight - popup.offsetHeight) / 2}px`;
-        popup.style.left = `${(window.innerWidth - popup.offsetWidth) / 2}px`;
-        // ouvre la popup et la place
-
-        document.getElementById('close_popup')?.addEventListener('click', () => {
-            popup.close();
-        });
-        // active le bouton fermeture de la popup
-
-        popup.addEventListener('click', (e) => {
-            if (e.target === popup) {
-            // dialog = si clic en dehors de la popup, considéré comme clic sur la popup
-            // mais pas sur le content, donc target === popup => clic en dehors
-                popup.close();
-            }
-        });
-        // ferme la popup en cas de clic en dehors
-});
-
-
-/* Affichage du menu */
-
-let menuButton = document.getElementById("menu_button");
-let burgerMenu = document.getElementById("burger_menu");
-
-if(menuButton) {
-    menuButton.addEventListener("click", () => {
-    let rect = menuButton.getBoundingClientRect();
-    burgerMenu.style.position = "fixed";
-    burgerMenu.style.top = rect.bottom + "px";   // sous le bouton
-    burgerMenu.style.left = rect.left + "px";    // aligné à gauche du bouton
-    burgerMenu.classList.toggle("open");
-    });
-
-    // ferme le menu en cas de clic en dehors
-    document.addEventListener('click', (e) => {
-        // si le menu est fermé, rien à faire
-        if (!burgerMenu.classList.contains('open')) return;
-    
-        // si le clic est ni dans le menu ni sur le bouton -> fermer
-        const clickInsideMenu   = burgerMenu.contains(e.target);
-        const clickOnMenuButton = menuButton.contains(e.target);
-    
-        if (!clickInsideMenu && !clickOnMenuButton) {
-        burgerMenu.classList.remove('open');
-        }
-    });
-    
-    // fermer avec Échap (accessibilité)
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') burgerMenu.classList.remove('open');
-    });
-}
-
-
-/* REGEX - ECHAPPEMENT DES CARACTERES SPECIAUX */
-
-function escapeRegex(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    // $& => le caractère matché, on le réinjecte précédé d'un \ pour l'échapper
-}
-
-
-/* BOUTON DE RETOUR VERS LE HAUT */
-
-    /* Fonctionnement */
-
-let btnUp = document.getElementById('btn_up')
-if(btnUp) {
-    document.getElementById('btn_up').addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-}
-
-    /* Affiché uniquement quand déjà scrollé */
-
-window.addEventListener('scroll', () => {
-    const btn = document.getElementById('btn_up');
-    if (window.scrollY > 50) {
-        btn.classList.add('visible');
-    } else {
-        btn.classList.remove('visible');
-    }
-});
-
-
-/* AFFICHAGE DES FILTRES SUPP VIA DETAILS */
-
-const details = document.getElementById('details_options');
-const content = document.getElementById('details_options_content');
-if(details && content) {
-    const summary = details.querySelector('summary');
-
-    summary.addEventListener('click', (e) => {
-        e.preventDefault(); // empêche le comportement natif
-        if (details.open) {
-            content.style.maxHeight = '0';
-            content.style.opacity = '0';
-            setTimeout(() => details.removeAttribute('open'), 300);
-        } else {
-            details.setAttribute('open', '');
-            content.style.maxHeight = content.scrollHeight + 'px';
-            setTimeout(() => content.style.opacity = '1', 300);
-        }
-    });
-}
-
-
-/* FILTRE DES OFFRES - Select */
-
-const select = document.getElementById("offers_displayed");
-if(select) {
-    const jobOffers = document.querySelectorAll(".job_card");
-    const searchInput = document.getElementById('search_content');
-    const visibleCount = document.getElementById('visible_count');
-
-    function highlightTerm(card, term) { // met en surbrillance les termes du search
-        // cible tous les éléments texte de la card
-        const elements = card.querySelectorAll('h3, h4, h5, p');
-
-        elements.forEach(el => {
-            // sauvegarde le contenu original la première fois pour retirer le highlight
-            if (!el.dataset.original) {
-                el.dataset.original = el.innerHTML;
-            }
-
-            // restaure toujours d'abord
-            el.innerHTML = el.dataset.original;
-
-            // puis surbrille si un terme est présent
-            if (term.length > 1) { // évite de surbriller à chaque lettre dès le 1er caractère
-                const safeTerm = escapeRegex(term);
-                const regex = new RegExp(safeTerm, 'gi');
-                // g => global, toutes les occurences, pas que la première
-                // i => insensitive, insensible à la casse
-                el.innerHTML = el.dataset.original.replace(
-                    regex,
-                    match => `<span class="search_highlight">${match}</span>`
-                );
-            }
-        });
-    };
-
-    function applyFilters() {
-
-        const filter = select.value;
-        const term = searchInput.value.toLowerCase().trim();
-        let offersDisplayedCntr = 0;
-
-        jobOffers.forEach((card) => {
-            const status = card.dataset.status;
-            const text = card.textContent.toLowerCase(); // récup l'ensemble des textes de la card
-
-            const matchFilter = filter === "all" || status === filter.replace("_only", "");
-            // si vaut all = true, sinon true si le filtre match le statut de la card
-            const matchSearch = term === "" || text.includes(term);
-            // vaut true si un des textes de la card comporte le terme recherché
-
-            const isVisible = matchFilter && matchSearch; // vaut true si les 2 sont à true
-            card.classList.toggle("filtered_out", !isVisible); // si ne match pas les 2 filtres, disparait
-            if(isVisible) offersDisplayedCntr ++;
-
-            highlightTerm(card, term); // déclenche le check de surbrillance
-        });
-
-        visibleCount.textContent = offersDisplayedCntr;
-    }
-
-    // Applique le filtre au chargement selon la valeur déjà sélectionnée
-    applyFilters(select.value);
-
-    // Puis à chaque changement
-    select.addEventListener("change", applyFilters);
-    searchInput.addEventListener("input", applyFilters);
-}
-
-/* SYSTEME DE TRI PAR DATE */
-
-const sortSelect = document.getElementById("sort_offers");
-
-if(sortSelect) {
-    function applySort() {
-        const order = sortSelect.value;
-        const cards = Array.from(jobOffers);
-
-        cards.sort((a, b) => {
-            const dateA = new Date(a.dataset.date);
-            const dateB = new Date(b.dataset.date);
-            return order === "newest" ? dateB - dateA : dateA - dateB;
-        });
-
-        const jobBoard = document.getElementById('job_board');
-        cards.forEach(card => jobBoard.appendChild(card));
-    }
-
-    sortSelect.addEventListener("change", applySort);
-}
-
-
-/* SCROLL VERS OFFRE SELECTIONNEE */
-
-const radios = document.querySelectorAll('.job_card input[type="radio"]');
-
-radios.forEach((radio) => {
-    radio.addEventListener("change", (e) => {
-        if (e.target.checked) {
-            const card = e.target.closest(".job_card"); // va chercher la card correspondante
-            setTimeout(() => {
-                const top = card.getBoundingClientRect().top + window.scrollY - 20;
-                // -20 = marge au dessus de la card
-                window.scrollTo({ top: top, behavior: "smooth" });
-            }, 50); // laisse le temps au CSS de réafficher le texte
-        }
-    });
-});
-
-
 /* Mise à jour des status des offres par l'utilisateur*/
 
 function updateCounts() {
@@ -426,5 +187,53 @@ if(refreshBtn) {
 
     });
 }
+
+    /* Mise à jour des expressions clés et blacklist en DB */
+
+/* Suppression d'une expression clé ou blacklist en DB */
+
+async function eraseExpressionInDB(id) { 
+    // la fonction doit être async pour intégrer await
+    const formdata = new FormData();
+    formdata.append("id", id);
+
+    // Bloque les interactions pendant l'opération
+    document.getElementById('keywords_container').classList.add('loading');
+    document.getElementById('blacklist_container').classList.add('loading');
+
+    try {
+        const response = await fetch("./src/api/eraseExpressionTrigger.php", {
+            method: "POST",
+            body: formdata
+        });
+        const text = await response.text();
+
+        if (text.trim() === "wrongUser") {
+            showNotification("Une erreur s'est produite. Merci de ré-essayer plus tard.", "error");
+        } else if (text.trim() === "success") {
+            // Supprime l'élément du DOM
+            const item = document.querySelector(`[data-id="${id}"]`);
+            if (item) {
+                item.classList.add('fade-away');
+                setTimeout(() => {
+                    item.remove();
+                    item.classList.remove('fade-away');
+                }, 500);
+            }
+            showNotification("Expression supprimée avec succès.", "success");
+        } else if (text.trim() === "error") {
+            showNotification("Une erreur s'est produite. Merci de ré-essayer plus tard.", "error");
+        }
+
+    } catch(error) {
+        console.error("Erreur fetch :", error);
+        showNotification("Une erreur réseau s'est produite.", "error");
+    } finally {
+        // finally s'exécute toujours, succès ou erreur
+        document.getElementById('keywords_container').classList.remove('loading');
+        document.getElementById('blacklist_container').classList.remove('loading');
+    }
+}
+
 
 

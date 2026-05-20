@@ -405,4 +405,63 @@ function globalDBUpdate() : int { // MàJ globale de la DB : clean des anciennes
     return $newOffersAdzuna + $newOffersFranceTravail;
 }
 
+
+/* Fonctions pour la table keywords */
+
+function getKeywordsByUserId(string $user_id) : array { // récupère les expressions clés et blacklistées d'un user
+    $SQLGetKeywordsByUserId = "SELECT * FROM jobsfinder_keywords 
+    WHERE user_id = :user_id";
+    $pdo = connect();
+    $stmtGetKeywordsByUserId = $pdo->prepare($SQLGetKeywordsByUserId);
+    $stmtGetKeywordsByUserId->execute([
+        'user_id' => $user_id
+    ]);
+
+    return $stmtGetKeywordsByUserId->fetchAll();
+}
+
+
+function checkMatchBetweenKeyAndUserId(int $id) : bool { // vérifie que l'expression qu'un
+    // user veut manipuler est bien à lui
+    $SQLGetKeywordByKeyId = "SELECT user_id FROM jobsfinder_keywords 
+    WHERE id = :id LIMIT 1";
+    $pdo = connect();
+    $stmtGetKeywordByKeyId = $pdo->prepare($SQLGetKeywordByKeyId);
+    $stmtGetKeywordByKeyId->execute([
+        'id' => $id
+    ]);
+
+    // récupère le retour de la requête sous forme de tableau
+    $row = $stmtGetKeywordByKeyId->fetch();
+    // sélectionne dans le tableau uniquement le user_id
+    $ownerId = $row['user_id'];
+
+    // résultat de l'opé par défaut
+    $result = false;
+
+    // récupère user_id en session et le compare
+    isset($_SESSION['user_id']) ? $userId = $_SESSION['user_id'] : $userId = NULL;
+    $userId == $ownerId ? $result = true : $result = false;
+
+    return $result;
+}
+
+
+function eraseKeyFromDB(int $id) : bool { // supprime l'expression en DB et dit si c'est OK
+    $SQLEraseKeyFromDB = "DELETE FROM jobsfinder_keywords 
+    WHERE id = :id";
+    $pdo = connect();
+    try {
+        $stmtEraseKeyFromDB = $pdo->prepare($SQLEraseKeyFromDB);
+        $stmtEraseKeyFromDB->execute([
+            'id' => $id
+        ]);
+        return true;
+
+    } catch(Exception $e) {
+        return false;
+    };
+}
+
+
 ?>

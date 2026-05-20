@@ -41,6 +41,7 @@ a {
 
 button {
     appearance: unset;
+    background-color: unset;
     border: unset;
     font-family: unset;
     font-size: unset;
@@ -183,13 +184,44 @@ header img {
     font-size: small;
 }
 
-
 /* FOOTER */
 
 footer {
     margin-top: 50px;
     padding-bottom: 10px;
     text-align: center;
+}
+
+/* NOTIFICATION BANNER */
+
+#notification_banner {
+    padding: 10px;
+    border-radius: 5px;
+    width: fit-content;
+    max-width: 90vw;
+    position: fixed;
+    bottom: 10px;
+    transform: translateY(100px);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.5s ease-in-out;
+}
+
+#notification_banner.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+#notification_banner.success {
+    background-color: mediumseagreen;
+    color: var(--color-bg);
+}
+
+#notification_banner.error {
+    background-color: firebrick;
+    color: var(--color-bg);
 }
 
 
@@ -613,4 +645,97 @@ h1.subpage_title {
 .cv_downloader_title:hover {
     color: var(--color-tertiary);
 }
+
+
+/* PARAMETER PAGE */
+
+.parameters_title {
+    margin-top: 15px;
+}
+
+.comments {
+    width: 90%;
+    font-size: 0.9em;
+    margin: 10px 0;
+}
+
+#keywords_container, 
+#blacklist_container {
+    border-radius: 10px;
+    background-color: rgba(51, 86, 210, 0.3);
+    border: 2px solid var(--color-tertiary);
+    padding: 20px 10px;
+    width: 90%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    align-items: center;
+    gap: 15px;
+}
+
+#blacklist_container {
+    border: 2px solid var(--color-text);
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+#keywords_container.loading, 
+#blacklist_container.loading {
+    /* RENDRE CA DISABLED */
+}
+
+.keyword button, 
+.blacklist button {
+    height: 1em;
+}
+
+.keyword, 
+.blacklist, 
+#keyword_create_new, 
+#blacklist_create_new {
+    padding: 5px 10px;
+    background-color: var(--color-tertiary);
+    color: var(--color-bg);
+    border-radius: 5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.blacklist {
+    background-color: var(--color-text);
+}
+
+.keyword.fade-away, 
+.blacklist.fade-away {
+  animation: fadeAway 0.5s ease-in-out forwards;
+}
+
+@keyframes fadeAway {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+#keywords_container svg, 
+#blacklist_container svg {
+    height: 1em;
+    aspect-ratio: 1;
+}
+
+#keywords_container svg path, 
+#blacklist_container svg path {
+    stroke-width: 2;
+    stroke: var(--color-bg);
+}
+
+#keyword_create_new {
+    background-color: var(--color-tertiary);
+}
+
+#blacklist_create_new {
+    background-color: var(--color-text);
+}
+
 

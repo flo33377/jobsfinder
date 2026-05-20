@@ -1,10 +1,10 @@
 
-<!DOCTYPE html>
-<html lang="fr">
-
 <?php // dépendances
 include_once(__DIR__ . "/src/main.php");
 ?>
+
+<!DOCTYPE html>
+<html lang="fr">
 
 <head>
   <meta charset="UTF-8">
@@ -14,6 +14,7 @@ include_once(__DIR__ . "/src/main.php");
 
   <meta name="theme-color" content="#0000">
 
+  <script src="./public/js/js-ux.js" defer></script>
   <script src="./public/js/js-functions.js" defer></script>
 
   <link rel="apple-touch-icon" sizes="180x180" href="https://fneto-prod.fr/jobsfinder/public/img/find-icon.png">
@@ -61,6 +62,8 @@ include_once(__DIR__ . "/src/main.php");
   <?php include($content); ?>
 
   </main>
+
+  <p id="notification_banner"></p>
 
   <footer>
     <p>© Copyright <?= date('Y') ?><br>Florian Neto. Tous droits réservés.</p>

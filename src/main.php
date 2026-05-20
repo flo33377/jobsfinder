@@ -48,18 +48,6 @@ $page = "home"; // chemin du routeur par défaut => cas HP
 
 
 
-    // Authentification
-
-$isAuth = isset($_SESSION['user_id']);
-$isCallback = isset($_GET['mode']) && $_GET['mode'] === 'callback';
-$isLogin = isset($_GET['mode']) && $_GET['mode'] === 'login';
-
-if (!$isAuth && !$isCallback && !$isLogin) {
-    // afficher la page login
-    $page = "login";
-}
-
-
     // Routeur
 
 // récupération de la méthode de requête utilisée
@@ -107,6 +95,19 @@ switch ($method) {
         break;
 }
 
+    // Check d'authentification
+
+$isAuth = isset($_SESSION['user_id']);
+$isCallback = isset($_GET['mode']) && $_GET['mode'] === 'callback';
+$isLogin = isset($_GET['mode']) && $_GET['mode'] === 'login';
+
+if (!$isAuth && !$isCallback && !$isLogin) {
+    // si tentative d'accéder à une page, enregistre l'erreur
+    $page !== "home" ? $error = "forbidden_access" : $error = NULL;
+    // afficher la page login
+    $page = "login";
+}
+
 
 
     // Roads
@@ -130,6 +131,7 @@ switch($page){
 
     case "parameters" : // accès à la page paramètres
         $content = PARAMETERS;
+        $userKeywords = getKeywordsByUserId($_SESSION['user_id']);
         break;
 
     case "disconnect" : // deconnexion du user
