@@ -66,7 +66,9 @@ if(menuButton) {
     let rect = menuButton.getBoundingClientRect();
     burgerMenu.style.position = "fixed";
     burgerMenu.style.top = rect.bottom + "px";   // sous le bouton
-    burgerMenu.style.left = rect.left + "px";    // aligné à gauche du bouton
+    burgerMenu.style.left = "";
+    burgerMenu.style.right = (document.documentElement.clientWidth - rect.right) + "px"; // aligné avec le bord droit
+    menuButton.classList.toggle("open");
     burgerMenu.classList.toggle("open");
     });
 
@@ -80,13 +82,17 @@ if(menuButton) {
         const clickOnMenuButton = menuButton.contains(e.target);
     
         if (!clickInsideMenu && !clickOnMenuButton) {
+        menuButton.classList.remove('open');
         burgerMenu.classList.remove('open');
         }
     });
     
     // fermer avec Échap (accessibilité)
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') burgerMenu.classList.remove('open');
+        if (e.key === 'Escape') {
+            menuButton.classList.remove('open');
+            burgerMenu.classList.remove('open');
+        }
     });
 }
 
@@ -118,6 +124,97 @@ if(btnUp) {
         } else {
             btn.classList.remove('visible');
         }
+    });
+}
+
+    /* CAROUSEL EN HP */
+
+// récup les éléments
+const track = document.getElementById('carouselTrack');
+
+if(track) {
+    const inner = document.getElementById('carouselInner');
+    const dotsEl = document.getElementById('carouselDots');
+    const cards = inner.querySelectorAll('.carousel-card');
+
+    // set les variables d'état par défaut
+    let current = 0; // => index de la card affichée
+    let touchStartX = 0; // => position du scroll mémorisée au début d'un swipe
+    
+    // --- Aller à la slide N ---
+    function goTo(index) {
+        // le modulo permet de gérer le système de cycle (si j'arrive au bout (dernière card), je reviens dedans)
+        // Si je sors du nombre de card, le modulo recalcule ma position voulue au sein d'un cycle => 3e card et je vais à droite => me ramène en position 0
+        // si je suis dans le nbr de card => 1e card je vais à droite => le modulo s'annule et renvoie le même nbr, soit la cadre que j'essaie de voir
+        current = (index + cards.length) % cards.length;
+    
+        // On déplace le rail : décale l'ensemble de card pour n'afficher que celle qui intéresse
+        // possible car 100% = largeur d'une card
+        inner.style.transform = `translateX(-${current * 100}%)`;
+    
+        // Mise à jour des dots
+        dotsEl.querySelectorAll('.dot').forEach((dot, i) => {
+        const isActive = i === current;
+        dot.classList.toggle('active', isActive);
+        dot.setAttribute('aria-selected', isActive);
+        });
+    }
+    
+    // --- Génération des dots ---
+    cards.forEach((_, i) => {
+        // _ => l'élément (la card) // i => son index
+        const dot = document.createElement('button');
+        // class dot + active si son index est 0
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('role', 'tab');
+        dot.setAttribute('aria-label', `Aller à la carte ${i + 1}`);
+        dot.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+        // au clic, déclenche event pour aller sur la card correspondate
+        dot.addEventListener('click', () => goTo(i));
+        dotsEl.appendChild(dot);
+    });
+    
+    // --- Swipe tactile ---
+    // touchstart : on mémorise la position X du doigt
+    track.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        // e.touches[0] => tableau qui contient le nbr de doigts sur l'élément, 0 => le premier doigt
+        // clientX => coordonnées X du doigt par rapport au bord gauche de la fenêtre visible sur l'écran
+    }, { passive: true });
+    // améliore les performances du navig car dit que pas besoin d'attendre retour du JS pour effectuer manip natives
+    // utile sur des mécaniques de scroll
+    
+    // touchend : on compare avec la position finale
+    track.addEventListener('touchend', (e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        // e.changedTouches => tableau avec les doigts dont l'état vient de changer
+        // ici doigt levé = état modifié, récup sa dernière position
+        if (Math.abs(dx) > 40) {
+            // Math.abs renvoie valeur absolue (prend pas en compte positif ou négatif)
+            // permet calculer seuil de 40px que ce soit vers la gauche (négatif) ou la droite (positif)
+            // Ici => Seuil de 40px pour éviter les swipes accidentels
+        goTo(current + (dx < 0 ? 1 : -1));
+        }
+    }, { passive: true });
+    
+    // --- Navigation clavier (accessibilité) ---
+
+    let carouselVisible = false; // par défaut, dit que le carousel n'est pas dans la fenêtre
+
+    const observer = new IntersectionObserver(
+      (entries) => { // indique si l'élément "entries" est dans le champ du navigateur
+        // entries[0] correspond à l'élément observé
+        carouselVisible = entries[0].isIntersecting;
+      },
+      { threshold: 0.5 } // déclenché quand 50% du carousel est visible
+    );
+    
+    observer.observe(track); // applique le checker sur le carousel
+    
+    document.addEventListener('keydown', (e) => {
+      if (!carouselVisible) return; // on sort immédiatement si le carousel n'est pas visible
+      if (e.key === 'ArrowRight') goTo(current + 1);
+      if (e.key === 'ArrowLeft')  goTo(current - 1);
     });
 }
 

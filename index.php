@@ -21,6 +21,10 @@ include_once(__DIR__ . "/src/main.php");
   <link rel="icon" type="image/png" sizes="32x32" href="https://fneto-prod.fr/jobsfinder/public/img/find-icon.png">
   <link rel="icon" type="image/png" sizes="16x16" href="https://fneto-prod.fr/jobsfinder/public/img/find-icon.png">
 
+  <!-- Font Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
   <title>JobsFinder</title>
 </head>
 
@@ -29,22 +33,30 @@ include_once(__DIR__ . "/src/main.php");
 
   <header id="header">
 
-  <?php if(isset($_SESSION['user_id'])) : ?>
-      <svg id='menu_button' viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path fill-rule="evenodd" clip-rule="evenodd" d="M3 6C3 5.44772 3.44772 5 4 5H20C20.5523 5 21 5.44772 21 6C21 6.55228 20.5523 7 20 7H4C3.44772 7 3 6.55228 3 6ZM3 12C3 11.4477 3.44772 11 4 11H20C20.5523 11 21 11.4477 21 12C21 12.5523 20.5523 13 20 13H4C3.44772 13 3 12.5523 3 12ZM3 18C3 17.4477 3.44772 17 4 17H20C20.5523 17 21 17.4477 21 18C21 18.5523 20.5523 19 20 19H4C3.44772 19 3 18.5523 3 18Z"/>
-      </svg>
-    <?php else : ?>
-      <div></div>
-    <?php endif ?>
-
     <div>
       <a href='<?= BASE_URL ?>' class="header_logo">
-        <p id="title_header">Jobs Finder</p>
-        <img src="https://fneto-prod.fr/jobsfinder/public/img/find-icon.png" alt="Icon website">
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+        viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
+          <g>
+            <path d="M497.938,430.063l-126.914-126.91C389.287,272.988,400,237.762,400,200C400,89.719,310.281,0,200,0
+            C89.719,0,0,89.719,0,200c0,110.281,89.719,200,200,200c37.762,0,72.984-10.711,103.148-28.973l126.914,126.91
+            C439.438,507.313,451.719,512,464,512c12.281,0,24.563-4.688,33.938-14.063C516.688,479.195,516.688,448.805,497.938,430.063z
+            M64,200c0-74.992,61.016-136,136-136s136,61.008,136,136s-61.016,136-136,136S64,274.992,64,200z"/>
+          </g>
+        </svg>
+        <p>Jobs Finder</p>
       </a>
     </div>
 
-    <div></div>
+  <?php if(isset($_SESSION['user_id'])) : ?>
+      <svg id='menu_button' viewBox="0 0 24 24" aria-label="Menu" role="button">
+        <line class="bar top" x1="3" y1="6"  x2="21" y2="6" />
+        <line class="bar middle" x1="3" y1="12" x2="21" y2="12" />
+        <line class="bar bottom" x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+    <?php else : ?>
+      <div><a href="<?= BASE_URL ?>?mode=login" class="standard_cta connect">Se connecter avec Google</a></div>
+    <?php endif ?>
 
   </header>
 
@@ -66,7 +78,8 @@ include_once(__DIR__ . "/src/main.php");
   <p id="notification_banner"></p>
 
   <footer>
-    <p>© Copyright <?= date('Y') ?><br>Florian Neto. Tous droits réservés.</p>
+    <p>© <?= date('Y') ?> Florian Neto - Jobsfinder</p>
+    <p>Tous droits réservés.</p>
   </footer>
 
 
