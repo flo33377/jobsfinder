@@ -125,7 +125,9 @@ header {
 
 header svg {
     height: 30px;
-    width: fit-content;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
     fill: var(--color-tertiary);
     cursor: pointer;
 }
@@ -139,6 +141,9 @@ header svg {
 
 .header_logo svg {
     height: 18px;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
 }
 
 .standard_cta {
@@ -162,8 +167,14 @@ header svg {
     }
 }
 
+#menu_button {
+    padding: 5px 10px;
+    border: 1px solid rgba(140, 140, 140, 0.5);
+    border-radius: 2px;
+}
+
 #menu_button .bar {
-    stroke: var(--color-tertiary);
+    stroke: var(--color-subtext);
     stroke-width: 2;
     stroke-linecap: round;
     transition: transform 0.3s ease, opacity 0.2s ease;
@@ -328,6 +339,9 @@ footer {
 
 .info_tag svg {
     height: 15px;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
     fill: var(--color-tertiary);
 }
 
@@ -426,6 +440,9 @@ footer {
     margin-bottom: 1rem;
     margin-left: 1rem;
     height: 30px;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
     fill: var(--color-tertiary);
 }
 
@@ -536,6 +553,9 @@ footer {
 
 .info_card svg {
     height: 20px;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
     fill: var(--color-tertiary);
 }
 
@@ -572,7 +592,7 @@ footer {
     flex-direction: column;
     align-items: center;
     gap: 20px;
-    padding: 50px 0;
+    padding: 50px 20px;
     text-align: center;
 }
 
@@ -767,6 +787,38 @@ details[open] summary::after {
     }
 }
 
+.job_card h3 {
+    color: var(--color-tertiary);
+    font-size: 1.3em;
+}
+
+.job_card h4 {
+    font-size: 1em;
+    font-weight: 400;
+}
+
+.job_card .offer_timestamp {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+    color: var(--color-subtext);
+}
+
+.job_card .offer_timestamp svg {
+    height: 0.9em;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
+    fill: var(--color-subtext);
+}
+
+.job_card h5 {
+    font-size: 0.9em;
+    font-weight: 400;
+}
+
 .job_card label {
     cursor: pointer;
 }
@@ -781,37 +833,55 @@ details[open] summary::after {
 
 .job_status {
     margin-top: 5px;
-    padding: 2px 5px;
+    padding: 2px 8px;
     width: fit-content;
     border-radius: 5px;
     color: white;
     opacity: 0.7;
+    font-size: 0.8em;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+}
+
+.job_status svg {
+    height: 16px;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
 }
 
 .job_card.hidden {
-    background-color: lightgray;
+    opacity: 0.5;
 }
 
 .job_card.hidden .job_status {
     background-color: slategray;
+    fill: black;
+    color: black;
 }
 
 .job_card.applied {
-    background-color: #9FE5AE;
+    background-color: #cefdce;
 }
 
 .job_card.applied .job_status {
-    background-color: mediumseagreen;
+    background-color: palegreen;
+    fill: green;
+    color: green;
 }
 
 .job_card.visible .job_status {
-    background-color: #3356D2;
+    background-color: #bbd0f7;
+    fill: midnightblue;
+    color: midnightblue;
 }
 
 .job_card.visible .new_offer_tag {
-    background-color: yellow;
-    color: black;
-    border: 1px solid rgba(179, 179, 181, 0.6);
+    background-color: #ffe8cc;
+    color: #b37400;
+    fill: #b37400;
 }
 
     /* Fin d'étiquettes des status */
@@ -841,32 +911,81 @@ details[open] summary::after {
     flex-direction: row;
     justify-content: space-around;
     gap: 10px;
+    flex-wrap: wrap;
+}
+
+.infos .action_btn a, 
+.infos .action_btn button {
+    width: 45%;
+}
+
+/* Case desktop */
+@media screen and (min-width: 767px) {
+    .infos .action_btn a, 
+    .infos .action_btn button {
+        max-width: 180px;
+    }
 }
 
 .main_cta, 
 .second_cta, 
 .third_cta {
-    padding: 10px;
-    border-radius: 10px;
+    padding: 10px 12px;
+    border-radius: 5px;
     box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
     text-align: center;
+    font-size: 0.9em;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.main_cta svg, 
+.second_cta svg, 
+.third_cta svg {
+    height: 0.9em;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
+}
+
+/* Case mobile */
+@media screen and (max-width: 767px) {
+    .main_cta svg, 
+    .second_cta svg, 
+    .third_cta svg {
+        display: none;
+    }
+}
+
+/* Case desktop */
+@media screen and (min-width: 767px) {
+    .applied_btn {
+        width: auto;
+        margin-left: auto;
+    }
 }
 
 .main_cta {
     background-color: var(--color-tertiary);
     color: white;
+    fill: white;
 }
 
 .second_cta {
     background-color: white;
     color: var(--color-tertiary);
     border: 2px solid var(--color-tertiary);
+    fill: var(--color-tertiary);
 }
 
 .third_cta {
     color: var(--color-tertiary);
     text-decoration: underline;
     box-shadow: none;
+    fill: var(--color-tertiary);
 }
 
     /* Bouton de retour en haut */
@@ -900,6 +1019,8 @@ details[open] summary::after {
 #btn_up svg {
     height: 30px;
     width: 30px;
+    display: block;
+    flex-shrink: 0;
 }
 
 #btn_up svg path {
@@ -1033,7 +1154,9 @@ h1.subpage_title {
 #keywords_container svg, 
 #blacklist_container svg {
     height: 1em;
-    aspect-ratio: 1;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
 }
 
 #keywords_container svg path, 
