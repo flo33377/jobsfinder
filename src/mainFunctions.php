@@ -38,7 +38,7 @@ function writeLog($message) {
 /* Fonctions d'authentification */
 
 function getUserByEmail(string $email) { // retourne les infos d'un user s'il existe en base 
-    $SQLGetUserByEmail = "SELECT user_id, user_email FROM jobsfinder_users 
+    $SQLGetUserByEmail = "SELECT user_id, user_email, reporting_link FROM jobsfinder_users 
     WHERE user_email = :user_email";
     $pdo = connect();
     $stmtGetUserByEmail = $pdo->prepare($SQLGetUserByEmail);
@@ -87,6 +87,25 @@ function changeOfferStatus(int $id, string $status): bool { // update le statut 
             'status' => $status,
             'new' => "",
             'id' => $id
+        ]);
+        return true;
+
+    } catch(Exception $e) {
+        return false;
+    };
+}
+
+
+function changeReportingURLByUserId(int $id, string $url): bool { // update le lien d'un fichier de suivi d'un user
+    // $id => user id // $url => nouvelle URL de fichier de suivi
+    $SQLChangeReportingUrl = "UPDATE jobsfinder_users 
+    SET reporting_link = :reporting_link WHERE user_id = :id";
+    $pdo = connect();
+    try {
+        $stmtChangeReportingUrl = $pdo->prepare($SQLChangeReportingUrl);
+        $stmtChangeReportingUrl->execute([
+            'id' => $id,
+            'reporting_link' => $url
         ]);
         return true;
 
@@ -408,13 +427,20 @@ function globalDBUpdate() : int { // MàJ globale de la DB : clean des anciennes
 
 /* Fonctions pour la table keywords */
 
-function getKeywordsByUserId(string $user_id) : array { // récupère les expressions clés et blacklistées d'un user
+function getKeywordsByUserId(string $user_id, string $mode) : array { // récupère les critères d'un user
+    // 1er param => user // 2e param => "key" pour expression clé et "blacklist" pour exp bannies
+    if (!in_array($mode, ['key', 'blacklist'])) {
+        // check que mode vaut bien key ou blacklist, sinon renvoie une erreur
+        throw new \InvalidArgumentException("Mode invalide : $mode");
+    }
+
     $SQLGetKeywordsByUserId = "SELECT * FROM jobsfinder_keywords 
-    WHERE user_id = :user_id";
+    WHERE user_id = :user_id AND type = :mode";
     $pdo = connect();
     $stmtGetKeywordsByUserId = $pdo->prepare($SQLGetKeywordsByUserId);
     $stmtGetKeywordsByUserId->execute([
-        'user_id' => $user_id
+        'user_id' => $user_id,
+        'mode' => $mode
     ]);
 
     return $stmtGetKeywordsByUserId->fetchAll();
@@ -433,6 +459,8 @@ function checkMatchBetweenKeyAndUserId(int $id) : bool { // vérifie que l'expre
 
     // récupère le retour de la requête sous forme de tableau
     $row = $stmtGetKeywordByKeyId->fetch();
+
+    if(empty($row)) { return false; }; // si expression non-trouvées, renvoie false
     // sélectionne dans le tableau uniquement le user_id
     $ownerId = $row['user_id'];
 
@@ -441,7 +469,9 @@ function checkMatchBetweenKeyAndUserId(int $id) : bool { // vérifie que l'expre
 
     // récupère user_id en session et le compare
     isset($_SESSION['user_id']) ? $userId = $_SESSION['user_id'] : $userId = NULL;
-    $userId == $ownerId ? $result = true : $result = false;
+    if($userId !== NULL) {
+        $userId == $ownerId ? $result = true : $result = false;
+    }
 
     return $result;
 }
@@ -455,6 +485,34 @@ function eraseKeyFromDB(int $id) : bool { // supprime l'expression en DB et dit 
         $stmtEraseKeyFromDB = $pdo->prepare($SQLEraseKeyFromDB);
         $stmtEraseKeyFromDB->execute([
             'id' => $id
+        ]);
+        return true;
+
+    } catch(Exception $e) {
+        return false;
+    };
+}
+
+function createNewExpressionToUser(int $id, string $exp, string $mode) : bool { // créé une nouvelle expression pour un user
+    // $id => user id, $exp => expression clé à intégrer, $mode => "key" ou "blacklist" pour le type d'exp
+    // retourne le résultat de l'opération success ou error
+
+    // check que la longueur est correcte
+    $expression = trim($exp);
+    $expLen = mb_strlen($expression);
+    if ($expLen < 3 || $expLen > 30) {
+        return false;
+    }
+
+    // si oui, procède à l'opération
+    $SQLAddNewExpression = "INSERT INTO jobsfinder_keywords (user_id, expression, type) VALUES (:user_id, :expression, :type)";
+    $pdo = connect();
+    $stmt = $pdo->prepare($SQLAddNewExpression);
+    try {
+        $stmt->execute([
+            'user_id' => $id,
+            'expression' => $exp,
+            'type' => $mode
         ]);
         return true;
 

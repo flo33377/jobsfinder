@@ -1,90 +1,35 @@
-<h1>Paramètres</h1>
 
-<h2 class="parameters_title">Vos expressions clés</h2>
-<p class="comments">
-    Il s'agit des expressions utilisées pour rechercher des offres correspondantes à vos critères.
-    N'hésitez pas à multiplier les mots de vocabulaire pour tirer le meilleur parti de Jobs Finder.<br>
-    Ex : Chef de projet web => Chef de projet digital, Digital Project Manager, Expert web, etc.
-</p>
+<div class="parameters_content">
 
-<div id="keywords_container">
-    <?php if(!isset($userKeywords)) : // Cas => la requête en DB a échouée ?>
-        <p class="error_message">Une erreur s'est produite, merci de ré-essayer plus tard.</p>
-    
-    <?php elseif(isset($userKeywords) && empty($userKeywords)) : // Cas => aucune expression clé en base ?>
-        <p class="error_message">Aucune expression enregistrée.</p>
-        <button id="keywords_create_first">Créer votre première expression clé</button>
+    <h2 class="parameters_title">Vous deconnecter</h2>
 
-    <?php else : // Cas => Au moins 1 keyword ou blacklist de trouvé ?>
-
-        <?php foreach($userKeywords as $keyword) : ?>
-            <?php if($keyword['type'] == "key") : ?>
-                <div class="keyword" data-id="<?= $keyword['id'] ?>">
-                    <p><?= $keyword['expression'] ?></p>
-                    <button onclick="eraseExpressionInDB(<?= $keyword['id'] ?>)">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 20L4 4.00003M20 4L4.00002 20" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-            <?php endif ?>
-        <?php endforeach ?>
-
-        <button id='keyword_create_new'>Ajouter 
+    <div class="disconnect_btn">
+        <a href="<?= BASE_URL ?>?action=disconnect">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19,11H13V5a1,1,0,0,0-2,0v6H5a1,1,0,0,0,0,2h6v6a1,1,0,0,0,2,0V13h6a1,1,0,0,0,0-2Z"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M21.593 10.943c.584.585.584 1.53 0 2.116L18.71 15.95c-.39.39-1.03.39-1.42 0a.996.996 0 0 1 0-1.41 9.552 9.552 0 0 1 1.689-1.345l.387-.242-.207-.206a10 10 0 0 1-2.24.254H8.998a1 1 0 1 1 0-2h7.921a10 10 0 0 1 2.24.254l.207-.206-.386-.241a9.562 9.562 0 0 1-1.69-1.348.996.996 0 0 1 0-1.41c.39-.39 1.03-.39 1.42 0l2.883 2.893zM14 16a1 1 0 0 0-1 1v1.5a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v1.505a1 1 0 1 0 2 0V5.5A2.5 2.5 0 0 0 12.5 3h-7A2.5 2.5 0 0 0 3 5.5v13A2.5 2.5 0 0 0 5.5 21h7a2.5 2.5 0 0 0 2.5-2.5V17a1 1 0 0 0-1-1z"/>
             </svg>
-        </button>
+            <p>Deconnexion</p>
+        </a>
+    </div>
+
+    <h2 class="parameters_title">Lien de suivi</h2>
+
+    <form method="POST" action>
+        <input type="hidden" name="post_save_reporting_link" required>
+        <label class="comments" for="reporting_link">Saisissez ici le lien de votre document de suivi en ligne (google drive, template Notions, etc.).<br>
+        Il sera alors accessible directement depuis le menu.</label>
+        <input type="text" id="reporting_link" name="reporting_link"
+        <?php if(!empty($_SESSION['reporting_link'])) : ?>
+            value="<?= $_SESSION['reporting_link'] ?>" disabled
+            <?php endif ?>>
+        <input type="submit" id="change_reporting_url_btn"
+        <?php if(!empty($_SESSION['reporting_link'])) : ?>
+            value="Modifier"
+        <?php else : ?>
+            value="Ajouter"
+            <?php endif ?>>
+    </form>
 
 
-    <?php endif ?>
 </div>
-
-
-<h2 class="parameters_title">Vos expressions bannies</h2>
-<p class="comments">
-    Ce sont les mots et expressions qui excluent les offres.<br>
-    Si vous recherchez un CDI/CDD par exemple, vous pouvez exclure les offres qui contiennent 
-    "Stage", "Alternant" ou encore "Freelance".<br>
-    Cela peut aussi servir à exclure des types de mission ou des secteurs en particulier.
-</p>
-
-<div id="blacklist_container">
-    <?php if(!isset($userKeywords)) : // Cas => la requête en DB a échouée ?>
-        <p class="error_message">Une erreur s'est produite, merci de ré-essayer plus tard.</p>
-    
-    <?php elseif(isset($userKeywords) && empty($userKeywords)) : // Cas => aucune expression clé en base ?>
-        <p class="error_message">Aucune expression enregistrée.</p>
-        <button id="blacklist_create_first">Créer votre première expression bannie</button>
-
-    <?php else : // Cas => Au moins 1 keyword ou blacklist de trouvé ?>
-
-        <?php foreach($userKeywords as $keyword) : ?>
-            <?php if($keyword['type'] == "blacklist") : ?>
-                <div class="blacklist" data-id="<?= $keyword['id'] ?>">
-                    <p><?= $keyword['expression'] ?></p>
-                    <button onclick="eraseExpressionInDB(<?= $keyword['id'] ?>)">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20 20L4 4.00003M20 4L4.00002 20" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-            <?php endif ?>
-        <?php endforeach ?>
-
-        <button id='blacklist_create_new'>Ajouter 
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19,11H13V5a1,1,0,0,0-2,0v6H5a1,1,0,0,0,0,2h6v6a1,1,0,0,0,2,0V13h6a1,1,0,0,0,0-2Z"/>
-            </svg>
-        </button>
-
-
-    <?php endif ?>
-</div>
-
-
-<a href="<?= BASE_URL ?>?action=disconnect" class="second_cta">Deconnexion</a>
-
-
-
 

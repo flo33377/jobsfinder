@@ -37,6 +37,9 @@ define("CV_STORAGE", __DIR__ . "/content/cv_storage.php");
 // LOG_DIARY = Journal de log
 define("LOG_DIARY", __DIR__ . "/content/log_diary.php");
 
+// CRITERIAS = Page critères/expressions clés
+define("CRITERIAS", __DIR__ . "/content/criterias.php");
+
 // PARAMETERS = Page paramètres
 define("PARAMETERS", __DIR__ . "/content/parameters.php");
 
@@ -45,6 +48,7 @@ define("PARAMETERS", __DIR__ . "/content/parameters.php");
 
     // setting des param par défaut
 $page = "home"; // chemin du routeur par défaut => cas HP
+$currentPage = "offers"; // page actuelle pour effet active dans le menu
 
 
 
@@ -56,8 +60,15 @@ $method = $_SERVER['REQUEST_METHOD'];
 // switch routeur
 switch ($method) {
     case "POST":
-        if (!empty($_POST)) {
-            //if(isset($_POST['post_authenticate'])) $page = "check_authenticate"; // input caché post_authenticate
+        if(!empty($_POST)) {
+            if(isset($_POST['post_add_exp']) && !empty($_POST['post_add_exp'])) {
+            $page = "add_expression"; // input caché pour ajouter nouvelle expression
+        }
+
+        if(isset($_POST['post_save_reporting_link']) && !empty($_POST['reporting_link'])) {
+            $page = "save_reporting_link"; // input caché pour sauvegarder le lien de suivi
+        }
+
         }
         break;
 
@@ -83,6 +94,15 @@ switch ($method) {
 
         if(isset($_GET['mode']) && ($_GET['mode'] === "log_diary")) { // tentative d'accès au sommaire d'un cours
             $page = "log_diary" ;
+        }
+
+        if(isset($_GET['mode']) && ($_GET['mode'] === "criterias") && (!isset($_GET['delete_exp']))) { // accès à la page de de déf des critères
+            $page = "criterias" ;
+        }
+
+        if(isset($_GET['mode']) && ($_GET['mode'] === "criterias") 
+        && (isset($_GET['delete_exp'])) && (!empty($_GET['delete_exp'])) && is_numeric($_GET['delete_exp'])) { // demande de suppression d'une exp
+            $page = "delete_criteria" ;
         }
 
         if(isset($_GET['mode']) && ($_GET['mode'] === "parameters")) { // accès à la page de paramètres
@@ -123,19 +143,116 @@ switch($page){
     
     case "cv_storage" : // affichage de la page consultation des cv
         $content = CV_STORAGE;
+        $currentPage = "cv";
         break;
     
     case "log_diary" : // affichage du journal de log
         $content = LOG_DIARY;
+        $currentPage = "logs";
         break;
+
+    case "criterias" : // accès à la page paramètres
+        // Récupère et nettoie la notif de session si elle existe
+        if (!empty($_SESSION['notif_message'])) {
+            $server_notif_message = $_SESSION['notif_message'];
+            $server_notif_type = $_SESSION['notif_type'];
+            unset($_SESSION['notif_message']);
+            unset($_SESSION['notif_type']);
+        }
+        $content = CRITERIAS;
+        $userKeywords = getKeywordsByUserId($_SESSION['user_id'], "key");
+        $userBlacklists = getKeywordsByUserId($_SESSION['user_id'], "blacklist");
+        $currentPage = "criterias";
+        break;
+
+    case "delete_criteria" : // demande de suppression d'expression
+        // check si user_id correspond bien au propriétaire de l'expression
+        $match = checkMatchBetweenKeyAndUserId($_GET['delete_exp']);
+        if(!$match) {
+            // si le user n'est pas owner de l'expression => échec
+            $_SESSION['notif_message'] = "Une erreur s'est produite. Merci de ré-essayer plus tard.";
+            $_SESSION['notif_type'] = "error";
+        } else {
+             // s'il est owner de l'expression, poursuit
+            $erasingResult = eraseKeyFromDB($_GET['delete_exp']);
+            $_SESSION['notif_message'] = $erasingResult
+            ? "Expression supprimée avec succès." // si succès
+            : "Une erreur s'est produite. Merci de ré-essayer plus tard."; // sinon si échec
+            $_SESSION['notif_type'] = $erasingResult ? "success" : "error";
+        }
+        header('Location: ' . BASE_URL . '?mode=criterias');
+        exit;
+    
+    case "add_expression" : // demande de d'ajout de nouvelle d'expression
+        // check que le type d'exp à créer est cohérent
+        if(!isset($_POST['post_add_type']) || (($_POST['post_add_type'] !== "key") && ($_POST['post_add_type'] !== "blacklist"))) {
+            $_SESSION['notif_message'] = "Une erreur s'est produite. Merci de ré-essayer plus tard.";
+            $_SESSION['notif_type'] = "error";
+        } else {
+            if($_POST['post_add_type'] == "key") { // récup le nombre d'expression en fonction du type
+                $expCount = count(getKeywordsByUserId($_SESSION['user_id'], "key"));
+            } else {
+                $expCount = count(getKeywordsByUserId($_SESSION['user_id'], "blacklist"));
+            }
+            if($expCount >= 10) {
+                // si le nbr max d'expression est atteint => erreur
+                $_SESSION['notif_message'] = "Vous avez atteint le nombre maximum d'expressions.";
+                $_SESSION['notif_type'] = "error";
+            } else {
+                // si nbr ok => effectue l'opération
+                $successAddingOperation = createNewExpressionToUser($_SESSION['user_id'], $_POST['exp_add_name'], $_POST['post_add_type']);
+                if($successAddingOperation) {
+                    // si opération réussi => notif de succès
+                    $_SESSION['notif_message'] = "Expression ajoutée.";
+                    $_SESSION['notif_type'] = "success";
+                } else {
+                    // si échec de l'opération => erreur
+                    $_SESSION['notif_message'] = "Une erreur s'est produite. Merci de ré-essayer plus tard.";
+                    $_SESSION['notif_type'] = "error";
+                };
+            }
+        };
+        header('Location: ' . BASE_URL . '?mode=criterias');
+        exit;
 
     case "parameters" : // accès à la page paramètres
+        // Récupère et nettoie la notif de session si elle existe
+        if (!empty($_SESSION['notif_message'])) {
+            $server_notif_message = $_SESSION['notif_message'];
+            $server_notif_type = $_SESSION['notif_type'];
+            unset($_SESSION['notif_message']);
+            unset($_SESSION['notif_type']);
+        }
         $content = PARAMETERS;
-        $userKeywords = getKeywordsByUserId($_SESSION['user_id']);
+        $userKeywords = getKeywordsByUserId($_SESSION['user_id'], "key");
+        $currentPage = "parameters";
         break;
+    
+    case "save_reporting_link" : // tentative de sauvegarde d'un lien de suivi des candidatures
+        if(!filter_var($_POST['reporting_link'])) {
+            $_SESSION['notif_message'] = "Une erreur s'est produite. Merci de ré-essayer plus tard.";
+            $_SESSION['notif_type'] = "error";
+        } else {
+            $successChangeUrl = changeReportingURLByUserId($_SESSION['user_id'], $_POST['reporting_link']);
+            if($successChangeUrl) {
+                // si opération réussi => notif de succès
+                $_SESSION['notif_message'] = "URL modifiée.";
+                $_SESSION['notif_type'] = "success";
+                $_SESSION['reporting_link'] = $_POST['reporting_link'];
+            } else {
+                // si opération échouée => notif d'échec
+                $_SESSION['notif_message'] = "TESTUne erreur s'est produite. Merci de ré-essayer plus tard.";
+                $_SESSION['notif_type'] = "error";
+            }
+        };
+        header('Location: ' . BASE_URL . '?mode=parameters');
+        exit;
 
     case "disconnect" : // deconnexion du user
-        unset($_SESSION['oauth2state'], $_SESSION['user_id'], $_SESSION['user_email']);
+        unset($_SESSION['oauth2state'], 
+        $_SESSION['user_id'], 
+        $_SESSION['user_email'], 
+        $_SESSION['reporting_link']);
         header('Location: ' . BASE_URL);
 }
 

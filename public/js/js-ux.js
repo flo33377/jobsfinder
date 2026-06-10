@@ -40,36 +40,70 @@ document.addEventListener('click', (e) => {
         popup.style.left = `${(window.innerWidth - popup.offsetWidth) / 2}px`;
         // ouvre la popup et la place
 
-        document.getElementById('close_popup')?.addEventListener('click', () => {
-            popup.close();
+        // si un élément à la class autofocus_target, le focus
+        const autofocusEl = popup.querySelector('.autofocus_target');
+        if (autofocusEl) autofocusEl.focus();
+
+        // Ouvre l'overlay du menu s'il existe
+        /* const menuOverlay = document.getElementById('menu_overlay');
+        if (menuOverlay) menuOverlay.classList.add('open'); */
+
+        // Fermeture via tous les éléments .close_popup dans cette popup
+        popup.querySelectorAll('.close_popup').forEach(btn => {
+            btn.addEventListener('click', () => closePopup(popup));
         });
-        // active le bouton fermeture de la popup
 
         popup.addEventListener('click', (e) => {
             if (e.target === popup) {
             // dialog = si clic en dehors de la popup, considéré comme clic sur la popup
             // mais pas sur le content, donc target === popup => clic en dehors
-                popup.close();
+                closePopup(popup);
             }
         });
         // ferme la popup en cas de clic en dehors
 });
+
+function closePopup(popup) {
+    popup.close();
+    /* const menuOverlay = document.getElementById('menu_overlay');
+    if (menuOverlay) menuOverlay.classList.remove('open'); */
+}
 
 
 /* Affichage du menu */
 
 let menuButton = document.getElementById("menu_button");
 let burgerMenu = document.getElementById("burger_menu");
+let header = document.getElementById("header");
+let overlay = document.getElementById("menu_overlay");
 
 if(menuButton) {
     menuButton.addEventListener("click", () => {
-    let rect = menuButton.getBoundingClientRect();
-    burgerMenu.style.position = "fixed";
-    burgerMenu.style.top = rect.bottom + "px";   // sous le bouton
-    burgerMenu.style.left = "";
-    burgerMenu.style.right = (document.documentElement.clientWidth - rect.right) + "px"; // aligné avec le bord droit
-    menuButton.classList.toggle("open");
-    burgerMenu.classList.toggle("open");
+        let rect = header.getBoundingClientRect();
+        const isOpening = !burgerMenu.classList.contains('open');
+        
+        if (isOpening) {
+            // Figer le header à sa position viewport actuelle
+            header.style.position = "fixed";
+            header.style.top = rect.top + "px";
+            header.style.left = rect.left + "px";
+            header.style.width = rect.width + "px";
+            // rajoute un padding dans le content pour éviter un décalage quand le header disparait
+            const headerMarginBottom = parseInt(getComputedStyle(header).marginBottom);
+            // => récup la valeur du margin bottom appliqué sur le header
+            document.body.style.paddingTop = (rect.height + headerMarginBottom) + "px";
+            // => Ajoute d'un padding de la taille du header et de son margin bottom
+            
+            // Menu et overlay positionnés sous le header
+            burgerMenu.style.position = "fixed";
+            burgerMenu.style.top = rect.bottom + "px";
+            burgerMenu.style.right = (document.documentElement.clientWidth - rect.right) + "px";
+            overlay.style.top = rect.bottom + "px";
+        }
+        
+        menuButton.classList.toggle("open");
+        burgerMenu.classList.toggle("open");
+        overlay.classList.toggle("open");
     });
 
     // ferme le menu en cas de clic en dehors
@@ -82,18 +116,30 @@ if(menuButton) {
         const clickOnMenuButton = menuButton.contains(e.target);
     
         if (!clickInsideMenu && !clickOnMenuButton) {
-        menuButton.classList.remove('open');
-        burgerMenu.classList.remove('open');
+        closeMenu();
         }
     });
     
     // fermer avec Échap (accessibilité)
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            menuButton.classList.remove('open');
-            burgerMenu.classList.remove('open');
+            closeMenu();
         }
     });
+
+    function closeMenu() {
+        menuButton.classList.remove('open');
+        burgerMenu.classList.remove('open');
+        overlay.classList.remove('open');
+        
+        // Relâcher le header
+        header.style.position = "";
+        header.style.top = "";
+        header.style.left = "";
+        header.style.width = "";
+        // retirer le padding qui masquait le décalage
+        document.body.style.paddingTop = "";
+    }
 }
 
 

@@ -198,8 +198,49 @@ if(refreshBtn) {
 
     /* Mise à jour des expressions clés et blacklist en DB */
 
-/* Suppression d'une expression clé ou blacklist en DB */
+/* Injection dynamique de l'id d'une expression dans popup suppression */
 
+function injectExpIdToErase(id) {
+    eraseBtn = document.getElementById('erase_exp_btn');
+    eraseBtn.setAttribute('href', BASE_URL + "?mode=criterias&delete_exp=" + id);
+}
+
+/* Injection dynamique du type d'expression à créer dans popup ajout */
+function injectExpTypeToAdd(type) {
+    typeExpToCreateInput = document.getElementById('post_add_type');
+    typeExpToCreateInput.setAttribute('value', type);
+}
+
+// Check de la longueur de l'expression entrée
+const expInput = document.getElementById('exp_add_name');
+const submitBtn = document.querySelector('#add_exp_modal input[type="submit"]');
+const errorMsg = document.getElementById('exp_add_error');
+// adapte les sélecteurs à ton HTML
+
+if(expInput) {
+    expInput.addEventListener('input', () => {
+        const val = expInput.value.trim();
+        
+        if (val.length > 0 && val.length < 3) {
+            errorMsg.textContent = "L'expression doit contenir au moins 3 caractères.";
+            errorMsg.hidden = false;
+            submitBtn.disabled = true;
+        } else if (val.length > 30) {
+            errorMsg.textContent = "L'expression ne peut pas dépasser 30 caractères.";
+            errorMsg.hidden = false;
+            submitBtn.disabled = true;
+        } else {
+            errorMsg.hidden = true;
+            submitBtn.disabled = false;
+        }
+    });
+}
+
+/* ATTENTION 
+
+// OBSOLETE => Ancienne fonction de suppression en requête AJAX
+
+ ATTENTION */
 async function eraseExpressionInDB(id) { 
     // la fonction doit être async pour intégrer await
     const formdata = new FormData();
@@ -244,4 +285,21 @@ async function eraseExpressionInDB(id) {
 }
 
 
+/* Activation de la saisie dans le champ URL de suivi (page paramètres) */
+
+reportingURLInput = document.getElementById('reporting_link');
+if(reportingURLInput) {
+    reportingUrlChangeBtn = document.getElementById('change_reporting_url_btn');
+
+    reportingUrlChangeBtn.addEventListener('click', (e) => {
+        // Si le champ est désactivé, on s'apprète à modifier => on empêche le submit
+        if (reportingURLInput.disabled) {
+            e.preventDefault();
+            reportingURLInput.disabled = false;
+            reportingURLInput.focus();
+            reportingUrlChangeBtn.value = 'Sauvegarder';
+        }
+        // Si le champ est actif, on laisse le submit se faire normalement
+    });
+}
 

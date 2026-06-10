@@ -31,6 +31,7 @@ if ($user) {
     session_regenerate_id(true);
     $_SESSION['user_id'] = $user['user_id'];
     $_SESSION['user_email'] = $email;
+    $user['reporting_link'] ? $_SESSION['reporting_link'] = $user['reporting_link'] : $_SESSION['reporting_link'] = NULL;
     header('Location: ' . BASE_URL);
 } else {
     // Email inconnu en DB
