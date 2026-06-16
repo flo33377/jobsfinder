@@ -1,10 +1,10 @@
 
 
-<h2 class="parameters_title">Critères de recherche</h2>
-<p class="comments">Ces critères pilotent l'import automatique des offres qui vous conviennent.</p>
+<h2 class="page_title">Critères de recherche</h2>
+<p class="subtitles">Ces critères pilotent l'import automatique des offres qui vous conviennent.</p>
 
-<div id="keywords_container">
-    <div class="keywords_title">
+<div id="keywords_container" class="container">
+    <div class="container_title space_between">
         <h3>
             <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
             viewBox="0 0 512 512">
@@ -17,12 +17,12 @@
             </svg>
             Expressions clés
         </h3>
-        <div class="keywords_counter<?php if(count($userKeywords) >= 10) : echo " maximum_count"; endif ?>">
+        <div class="keywords_counter<?php if(count($userKeywords) >= 20) : echo " maximum_count"; endif ?>">
             <?php if(!isset($userKeywords)) : // Cas => la requête en DB a échouée ?>
-                <p>0/10</p>
+                <p>0/20</p>
             <?php else : ?>
                 <p>
-                <?php echo count($userKeywords) ?>/10</p>
+                <?php echo count($userKeywords) ?>/20</p>
                 <?php endif ?>
         </div>
     </div>
@@ -34,7 +34,7 @@
     
     <?php elseif(isset($userKeywords) && empty($userKeywords)) : // Cas => aucune expression clé en base ?>
         <p class="error_message">Aucune expression enregistrée.</p>
-        <div role="button" id="keywords_create_first" data-popup-id="add_exp_modal" onclick="injectExpTypeToAdd('key')">
+        <div role="button" id="keyword_create_first" data-popup-id="add_exp_modal" onclick="injectExpTypeToAdd('key')">
             <p>Créer votre première expression</p>
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M19,11H13V5a1,1,0,0,0-2,0v6H5a1,1,0,0,0,0,2h6v6a1,1,0,0,0,2,0V13h6a1,1,0,0,0,0-2Z"/>
@@ -56,7 +56,7 @@
             <?php endif ?>
         <?php endforeach ?>
 
-        <?php if(count($userKeywords) < 10) : ?>
+        <?php if(count($userKeywords) < 20) : ?>
             <div role="button" id='keyword_create_new' data-popup-id="add_exp_modal" onclick="injectExpTypeToAdd('key')">
                 <p>Ajouter</p> 
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -65,7 +65,7 @@
             </div>
         <?php endif ?>
 
-        <?php if(count($userKeywords) >= 10) : ?>
+        <?php if(count($userKeywords) >= 20) : ?>
             <div class="info_max_reach">
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 14a1 1 0 0 1-1-1v-3a1 1 0 1 1 2 0v3a1 1 0 0 1-1 1zm-1.5 2.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z"/>
@@ -80,20 +80,20 @@
 </div>
 
 
-<div id="blacklist_container">
-    <div class="keywords_title">
+<div id="blacklist_container" class="container">
+    <div class="container_title space_between">
         <h3>
             <svg viewBox="0 0 1920 1920" xmlns="http://www.w3.org/2000/svg">
                 <path d="M213.333 960c0-167.36 56-321.707 149.44-446.4L1406.4 1557.227c-124.693 93.44-279.04 149.44-446.4 149.44-411.627 0-746.667-335.04-746.667-746.667m1493.334 0c0 167.36-56 321.707-149.44 446.4L513.6 362.773c124.693-93.44 279.04-149.44 446.4-149.44 411.627 0 746.667 335.04 746.667 746.667M960 0C429.76 0 0 429.76 0 960s429.76 960 960 960 960-429.76 960-960S1490.24 0 960 0" fill-rule="evenodd"/>
             </svg>
             Expressions bannies
         </h3>
-        <div class="keywords_counter<?php if(count($userBlacklists) >= 10) : echo " maximum_count"; endif ?>">
+        <div class="keywords_counter<?php if(count($userBlacklists) >= 20) : echo " maximum_count"; endif ?>">
             <?php if(!isset($userBlacklists)) : // Cas => la requête en DB a échouée ?>
-                <p>0/10</p>
+                <p>0/20</p>
             <?php else : ?>
                 <p>
-                    <?php echo count($userBlacklists) ?>/10</p>
+                    <?php echo count($userBlacklists) ?>/20</p>
                 <?php endif ?>
         </div>
     </div>
@@ -127,7 +127,7 @@
             <?php endif ?>
         <?php endforeach ?>
 
-        <?php if(count($userBlacklists) < 10) : ?>
+        <?php if(count($userBlacklists) < 20) : ?>
             <div role="button" id='blacklist_create_new' data-popup-id="add_exp_modal" onclick="injectExpTypeToAdd('blacklist')">
                 <p>Ajouter</p> 
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -136,7 +136,7 @@
             </div>
         <?php endif ?>
 
-        <?php if(count($userBlacklists) >= 10) : ?>
+        <?php if(count($userBlacklists) >= 20) : ?>
             <div class="info_max_reach">
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 14a1 1 0 0 1-1-1v-3a1 1 0 1 1 2 0v3a1 1 0 0 1-1 1zm-1.5 2.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z"/>
@@ -156,10 +156,13 @@
       <button class="close_popup close_desktop_only">X</button>
 
       <p>Êtes-vous sûr de vouloir supprimer cette expression ?</p>
-      <div class="action_btns">
-        <button class="close_popup">Annuler</button>
-        <a id="erase_exp_btn">Supprimer</a>
-      </div>
+      <form action method="POST">
+        <input type="hidden" name="post_erase_exp_id" id="post_erase_exp_id" required>
+        <div class="action_btns">
+            <button class="close_popup">Annuler</button>
+            <input type="submit" id="erase_exp_btn" value="Supprimer"></a>
+        </div>
+      </form>
     </div>
 </dialog>
 
@@ -169,7 +172,7 @@
       <button class="close_popup close_desktop_only">X</button>
 
       <form action method="POST">
-        <input type="hidden" name="post_add_exp" required>
+        <input type="hidden" name="post_add_exp">
         <input type="hidden" name="post_add_type" id="post_add_type" required>
 
         <label for="exp_add_name">Ajouter une nouvelle expression</label>

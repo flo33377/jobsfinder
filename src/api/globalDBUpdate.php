@@ -1,8 +1,10 @@
 <?php 
 
+session_start();
+
 require("../mainFunctions.php");
 
-$newOffersCount = globalDBUpdate();
+$newOffersCount = globalDBUpdateForUser();
 
 header('Content-Type: application/json');
 echo json_encode(["inserted" => $newOffersCount]);

@@ -51,12 +51,14 @@ function getUserByEmail(string $email) { // retourne les infos d'un user s'il ex
 
 /* Fonction(s) pour get des infos de la DB */
 
-function getAllJobs() : array { // renvoie toutes les jobs en BDD
+function getAllJobsByUser(int $id) : array { // renvoie toutes les jobs en BDD
     $SQLGetAllJobs = "SELECT * FROM jobsfinder_jobs 
-    ORDER BY posted_at DESC";
+    WHERE user_id = :user_id ORDER BY posted_at DESC";
     $pdo = connect();
     $stmtGetAllJobs = $pdo->prepare($SQLGetAllJobs);
-    $stmtGetAllJobs->execute([]);
+    $stmtGetAllJobs->execute([
+        'user_id' => $id
+    ]);
 
     return $stmtGetAllJobs->fetchAll();
 }
@@ -74,10 +76,47 @@ function formatPostedAt(string $postedAt): string { // renvoie un meilleur forma
     return "Postée le " . $posted->format('d/m');
 }
 
+function checkMatchBetweenOfferAndSessionUserId(int $id) : bool { // vérifie que l'offre qu'un
+    // user veut manipuler est bien à lui
+    // $id => id de l'offre en question
+    $SQLGetOfferByOfferId = "SELECT user_id FROM jobsfinder_jobs 
+    WHERE id = :id LIMIT 1";
+    $pdo = connect();
+    $stmtGetOfferByOfferId = $pdo->prepare($SQLGetOfferByOfferId);
+    $stmtGetOfferByOfferId->execute([
+        'id' => $id
+    ]);
+
+    // récupère le retour de la requête sous forme de tableau
+    $row = $stmtGetOfferByOfferId->fetch();
+
+    if(empty($row)) { return false; }; // si offre non-trouvées, renvoie false
+    // sélectionne dans le tableau uniquement le user_id
+    $ownerId = $row['user_id'];
+
+    // résultat de l'opé par défaut
+    $result = false;
+
+    // récupère user_id en session et le compare
+    isset($_SESSION['user_id']) ? $userId = $_SESSION['user_id'] : $userId = NULL;
+    if($userId !== NULL) {
+        $userId == $ownerId ? $result = true : $result = false;
+    }
+
+    return $result;
+}
 
 /* Fonction(s) pour update des choses en DB */
 
 function changeOfferStatus(int $id, string $status): bool { // update le statut d'une offre en DB
+    // $id => id de l'offre / $status => nouveau statut à lui donner
+
+    // Commence par checker que l'offre appartient bien au user qui demande à la modif
+    $match = checkMatchBetweenOfferAndSessionUserId($id);
+    // si c'est pas le cas, annule et renvoie une erreur
+    if(!$match) { return false; }
+
+    // si c'est bien à lui, démarre l'opé
     $SQLChangeOfferStatus = "UPDATE jobsfinder_jobs 
     SET status = :status, new = :new WHERE id = :id";
     $pdo = connect();
@@ -96,16 +135,19 @@ function changeOfferStatus(int $id, string $status): bool { // update le statut 
 }
 
 
-function changeReportingURLByUserId(int $id, string $url): bool { // update le lien d'un fichier de suivi d'un user
-    // $id => user id // $url => nouvelle URL de fichier de suivi
+function changeURLInDBByUserId( // update le lien d'un fichier de suivi d'un user
+    int $id, // => user id
+    string $url, // => url à envoyer en db
+    string $mode // => emplacement en db : reporting_link ou cv_link
+    ): bool { 
     $SQLChangeReportingUrl = "UPDATE jobsfinder_users 
-    SET reporting_link = :reporting_link WHERE user_id = :id";
+    SET $mode = :$mode WHERE user_id = :id";
     $pdo = connect();
     try {
         $stmtChangeReportingUrl = $pdo->prepare($SQLChangeReportingUrl);
         $stmtChangeReportingUrl->execute([
             'id' => $id,
-            'reporting_link' => $url
+            $mode => $url
         ]);
         return true;
 
@@ -117,32 +159,45 @@ function changeReportingURLByUserId(int $id, string $url): bool { // update le l
 
 /* Fonctions de gestion de BDD (imports, cleanage) */
 
-function cleanupJobsInDB() { // retire les offres de plus de 30j en DB
+function cleanupJobsInDBForUser( // retire les offres de plus de 30j en DB pour un user
+    int $userId // => user id
+) : void { 
     $pdo = connect();
 
     // Remet new à vide sur toutes les offres
-    $pdo->exec("UPDATE jobsfinder_jobs SET new = ''");
+    $SQLResetNewOffer = "UPDATE jobsfinder_jobs SET new = '' WHERE user_id = :user_id";
+    $stmtResetNewOffer = $pdo->prepare($SQLResetNewOffer);
+    $stmtResetNewOffer->execute(['user_id' => $userId]);
 
     // supprime les anciennes offres
-    $sql = "DELETE FROM jobsfinder_jobs
-    WHERE posted_at < NOW() - INTERVAL 31 DAY";
+    $SQLDeleteOldOffers = "DELETE FROM jobsfinder_jobs
+    WHERE posted_at < NOW() - INTERVAL 31 DAY AND user_id = :user_id";
 
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute();
+    $stmt = $pdo->prepare($SQLDeleteOldOffers);
+    $stmt->execute(['user_id' => $userId]);
 }
 
 
-function importAdzunaOffersInDB() : int { // importe les offres d'Adzuna
+function importAdzunaOffersForUser( // importe les offres d'Adzuna
+    int $userId, // => user id
+    array $keywords, // => expressions clés de l'utilisateur
+    array $blockedWords // => expressions blacklistées du user
+) : int { 
     $pdo = connect();
     $stmt = $pdo->prepare("
         INSERT IGNORE INTO jobsfinder_jobs
-        (source, source_id, title, company, location, description, url, posted_at, status, new, fingerprint)
+        (user_id, source, source_id, title, company, location, description, url, posted_at, status, new, fingerprint)
         VALUES
-        ('adzuna', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, 'adzuna', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     // compteur d'offres importées
     $inserted = 0;
+
+    // si pas de keywords associé au user, s'arrête là
+    if (empty($keywords)) {
+        return 0;
+    }
 
     $app_id   = ADZUNA_ID;
     $app_key  = ADZUNA_KEY;
@@ -150,7 +205,7 @@ function importAdzunaOffersInDB() : int { // importe les offres d'Adzuna
     $search_location = "Île-de-France"; // renommé pour éviter l'écrasement
     $max_pages = 10;
 
-    foreach (KEYWORDS as $keyword) {
+    foreach ($keywords as $keyword) {
 
         sleep(1);
 
@@ -216,9 +271,9 @@ function importAdzunaOffersInDB() : int { // importe les offres d'Adzuna
                     substr(strtolower(trim($description)), 0, 200)
                 );
 
-                // Filtre stage / alternance
+                // Filtre via les blacklisted expressions
                 $blocked = false;
-                foreach (BLOCKED_WORDS as $word) {
+                foreach ($blockedWords as $word) {
                     if (
                         stripos($title, $word) !== false ||
                         stripos($description, $word) !== false
@@ -230,6 +285,7 @@ function importAdzunaOffersInDB() : int { // importe les offres d'Adzuna
                 if ($blocked) continue;
 
                 $stmt->execute([
+                    $userId,
                     $source_id,
                     $title,
                     $company,
@@ -252,15 +308,24 @@ function importAdzunaOffersInDB() : int { // importe les offres d'Adzuna
 }
 
 
-function importFranceTravailOffersInDB() : int { // importe les offres de France Travail
+function importFranceTravailOffersForUser( // importe les offres de France Travail
+    int $userId, // => user id
+    array $keywords, // => expressions clés
+    array $blockedWords // => expressions bannies
+) : int { 
     $pdo = connect();
     $stmt = $pdo->prepare("INSERT IGNORE INTO jobsfinder_jobs
-    (source, source_id, title, company, location, description, url, posted_at, status, new, fingerprint)
+    (user_id, source, source_id, title, company, location, description, url, posted_at, status, new, fingerprint)
     VALUES
-    ('francetravail', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    (?, 'francetravail', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
     // compteur d'offres importées
     $inserted = 0;
+
+    // Garde-fou : si pas de keywords, rien à faire
+    if (empty($keywords)) {
+        return 0;
+    }
 
     // Récupération du token France Travail
 
@@ -306,8 +371,6 @@ function importFranceTravailOffersInDB() : int { // importe les offres de France
 
 
     // Recherche des offres
-
-    $keywords = KEYWORDS;
 
     foreach ($keywords as $keyword) {
 
@@ -374,11 +437,11 @@ function importFranceTravailOffersInDB() : int { // importe les offres de France
             );
 
 
-            // filtre stage / alternance
+            // filtre expressions bannies
 
             $blocked = false;
 
-            foreach (BLOCKED_WORDS as $word) {
+            foreach ($blockedWords as $word) {
 
                 if (
                     stripos($title, $word) !== false ||
@@ -394,6 +457,7 @@ function importFranceTravailOffersInDB() : int { // importe les offres de France
             }
 
             $stmt->execute([
+                $userId, 
                 $source_id,
                 $title,
                 $company,
@@ -415,19 +479,77 @@ function importFranceTravailOffersInDB() : int { // importe les offres de France
 }
 
 
-function globalDBUpdate() : int { // MàJ globale de la DB : clean des anciennes offres et imports
+function globalDBUpdateForUser() : int { // MàJ globale de la DB basée sur le user connu en session : 
+    // clean des anciennes offres et imports
+    // Le user_id est pris directement depuis la session
 
-    cleanupJobsInDB();
-    $newOffersAdzuna = importAdzunaOffersInDB();
-    $newOffersFranceTravail = importFranceTravailOffersInDB();
+    $userId = $_SESSION['user_id'] ?? NULL;
+    if($userId === NULL) { return 0; }
+    // si pas de user_id trouvé, renvoie 0 et stoppe la fonction
+
+    // fait le clean des offres du user
+    cleanupJobsInDBForUser($userId);
+
+    // Récupère les keywords et blacklist du user
+    $keywords    = getKeywordsByUserId($userId, "key");
+    $blockedWords = getKeywordsByUserId($userId, "blacklist");
+
+    // Extrait juste les expressions (pas les objets complets)
+    $keywords    = array_column($keywords, "expression");
+    $blockedWords = array_column($blockedWords, "expression");
+
+    $newOffersAdzuna = importAdzunaOffersForUser($userId, $keywords, $blockedWords);
+    $newOffersFranceTravail = importFranceTravailOffersForUser($userId, $keywords, $blockedWords);
 
     return $newOffersAdzuna + $newOffersFranceTravail;
 }
 
 
+function importOffersForAllUsers() : void { // effectue un import à chaque API pour chaque user en DB
+    $pdo = connect();
+    
+    // Récupère tous les users
+    $stmt = $pdo->query("SELECT id FROM jobsfinder_users");
+    $users = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    if (empty($users)) {
+        writeLog("Aucun user en base, import annulé.");
+        // A modifier : fichier de log est censé être par user
+        return;
+    }
+
+    foreach ($users as $userId) {
+        // retire les anciennes offres
+        cleanupJobsInDBForUser($userId);
+        
+        // Récupère les keywords et blacklist du user
+        $keywords    = getKeywordsByUserId($userId, "key");
+        $blockedWords = getKeywordsByUserId($userId, "blacklist");
+
+        // Extrait juste les expressions (pas les objets complets)
+        $keywords    = array_column($keywords, "expression");
+        $blockedWords = array_column($blockedWords, "expression");
+
+        // Garde-fou : pas de keywords => on passe au user suivant
+        if (empty($keywords)) {
+            writeLog("User $userId : aucun keyword, import ignoré.");
+            continue;
+        }
+
+        // Import Adzuna
+        $adzunaCount = importAdzunaOffersForUser($userId, $keywords, $blockedWords);
+        writeLog("User $userId - Adzuna : $adzunaCount offres importées.");
+
+        // Import France Travail
+        $ftCount = importFranceTravailOffersForUser($userId, $keywords, $blockedWords);
+        writeLog("User $userId - France Travail : $ftCount offres importées.");
+    }
+}
+
+
 /* Fonctions pour la table keywords */
 
-function getKeywordsByUserId(string $user_id, string $mode) : array { // récupère les critères d'un user
+function getKeywordsByUserId(int $user_id, string $mode) : array { // récupère les critères d'un user
     // 1er param => user // 2e param => "key" pour expression clé et "blacklist" pour exp bannies
     if (!in_array($mode, ['key', 'blacklist'])) {
         // check que mode vaut bien key ou blacklist, sinon renvoie une erreur
@@ -478,6 +600,12 @@ function checkMatchBetweenKeyAndUserId(int $id) : bool { // vérifie que l'expre
 
 
 function eraseKeyFromDB(int $id) : bool { // supprime l'expression en DB et dit si c'est OK
+
+    // Commence par checker que l'expression appartient bien au user qui demande à la suppr
+    $match = checkMatchBetweenKeyAndUserId($id);
+    // si c'est pas le cas, annule et renvoie une erreur
+    if(!$match) { return false; }
+
     $SQLEraseKeyFromDB = "DELETE FROM jobsfinder_keywords 
     WHERE id = :id";
     $pdo = connect();
@@ -500,7 +628,7 @@ function createNewExpressionToUser(int $id, string $exp, string $mode) : bool { 
     // check que la longueur est correcte
     $expression = trim($exp);
     $expLen = mb_strlen($expression);
-    if ($expLen < 3 || $expLen > 30) {
+    if ($expLen < 3 || $expLen > 50) {
         return false;
     }
 

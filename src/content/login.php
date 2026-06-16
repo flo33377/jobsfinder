@@ -237,14 +237,22 @@
 <?php elseif(isset($error) && ($error === "no_account")) : // Error => compte n'existe pas en DB ?>
     <p class="error_message">Aucun compte associé à cet email.<br>
     Pour demander la création d'un compte de test, contactez le propriétaire du site.
-    <a href='https://www.linkedin.com/in/florian-neto-751008b9/' class="second_cta">Prendre contact</a>
-    <a href="<?= BASE_URL ?>?mode=login" class="main_cta">Se connecter avec un autre compte</a>
+    <div class="unknown_email_btns">
+        <div class="standard_cta connect">
+            <a href="<?= BASE_URL ?>?mode=login">Se connecter avec un autre compte</a>
+        </div>
+        <div>
+            <a href='https://www.linkedin.com/in/florian-neto-751008b9/' class="standard_cta contact_cta">Prendre contact</a>
+        </div>
+    </div>
     </p>
 
 <?php elseif(isset($error) && ($error === "forbidden_access")) : //Error => tentative d'accéder à un contenu réservé aux users connectés  ?>
     <p class="error_message">Vous n'avez pas accès à ce contenu.<br>
     Connectez-vous pour utiliser les fonctionnalités Jobs Finder.</p>
-    <a href="<?= BASE_URL ?>?mode=login" class="main_cta">Se connecter avec Google</a>
+    <div class="standard_cta connect">
+        <a href="<?= BASE_URL ?>?mode=login">Se connecter avec Google</a>
+    </div>
 
 <?php else : // Error => Cas d'erreur qui n'a pas de scénario propre ?>
     <p class="error_message">Une erreur s'est produite.<br>

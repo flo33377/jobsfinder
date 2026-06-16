@@ -89,7 +89,8 @@ include_once(__DIR__ . "/src/main.php");
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M4 4a2 2 0 0 1 2-2h8a1 1 0 0 1 .707.293l5 5A1 1 0 0 1 20 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4zm13.586 4L14 4.414V8h3.586zM12 4H6v16h12V10h-5a1 1 0 0 1-1-1V4zm-4 9a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H9a1 1 0 0 1-1-1zm0 4a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H9a1 1 0 0 1-1-1z"/>
       </svg>
-        <p>Bibliothèque de CV</p>
+        <p>Espace CV</p>
+        <p class="menu_info incoming">A venir</p>
       </a>
     </div>
 
@@ -105,7 +106,7 @@ include_once(__DIR__ . "/src/main.php");
         </svg>
         <p>Suivi candidature</p>
         <?php if(empty($_SESSION['reporting_link'])) : ?>
-          <p class="menu_info">Non-renseigné</p>
+          <p class="menu_info error">Non-renseigné</p>
         <?php endif ?>
       </a>
     </div>
@@ -116,7 +117,8 @@ include_once(__DIR__ . "/src/main.php");
           <path d="M72.50391,150.62988,100.791,128,72.50391,105.37012A11.9996,11.9996,0,0,1,87.49609,86.62988l40,32a11.99895,11.99895,0,0,1,0,18.74024l-40,32a11.9996,11.9996,0,1,1-14.99218-18.74024ZM143.99414,172h32a12,12,0,1,0,0-24h-32a12,12,0,0,0,0,24ZM236,56.48535v143.0293A20.50824,20.50824,0,0,1,215.51465,220H40.48535A20.50824,20.50824,0,0,1,20,199.51465V56.48535A20.50824,20.50824,0,0,1,40.48535,36h175.0293A20.50824,20.50824,0,0,1,236,56.48535ZM212,60H44V196H212Z"/>
         </svg>
         <p>Journal de logs</p>
-      </a><!-- label supp => <p class="menu_info">Admin</p>-->
+        <p class="menu_info incoming">A venir</p>
+      </a>
     </div>
 
     <div class="menu_item <?php if($currentPage === "criterias") : echo 'active'; endif ?>">

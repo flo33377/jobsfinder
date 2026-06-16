@@ -84,26 +84,21 @@ if(menuButton) {
         
         if (isOpening) {
             // Figer le header à sa position viewport actuelle
-            header.style.position = "fixed";
-            header.style.top = rect.top + "px";
-            header.style.left = rect.left + "px";
-            header.style.width = rect.width + "px";
-            // rajoute un padding dans le content pour éviter un décalage quand le header disparait
-            const headerMarginBottom = parseInt(getComputedStyle(header).marginBottom);
-            // => récup la valeur du margin bottom appliqué sur le header
-            document.body.style.paddingTop = (rect.height + headerMarginBottom) + "px";
-            // => Ajoute d'un padding de la taille du header et de son margin bottom
+            let rect = header.getBoundingClientRect();
+            header.classList.add('menu_active');
             
             // Menu et overlay positionnés sous le header
             burgerMenu.style.position = "fixed";
             burgerMenu.style.top = rect.bottom + "px";
             burgerMenu.style.right = (document.documentElement.clientWidth - rect.right) + "px";
             overlay.style.top = rect.bottom + "px";
+
+            menuButton.classList.add("open");
+            burgerMenu.classList.add("open");
+            overlay.classList.add("open");
+        } else {
+            closeMenu();
         }
-        
-        menuButton.classList.toggle("open");
-        burgerMenu.classList.toggle("open");
-        overlay.classList.toggle("open");
     });
 
     // ferme le menu en cas de clic en dehors
@@ -131,14 +126,7 @@ if(menuButton) {
         menuButton.classList.remove('open');
         burgerMenu.classList.remove('open');
         overlay.classList.remove('open');
-        
-        // Relâcher le header
-        header.style.position = "";
-        header.style.top = "";
-        header.style.left = "";
-        header.style.width = "";
-        // retirer le padding qui masquait le décalage
-        document.body.style.paddingTop = "";
+        header.classList.remove('menu_active');
     }
 }
 
@@ -394,5 +382,6 @@ radios.forEach((radio) => {
         }
     });
 });
+
 
 

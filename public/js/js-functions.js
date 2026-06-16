@@ -9,75 +9,90 @@ function updateCounts() {
     document.getElementById("total_count").textContent = total;
 };
 
-function updateInDBOfferStatus(id, newStatus) {
+
+async function updateInDBOfferStatus(id, newStatus) {
     // récup les infos pour remplir le fetch
     const formdata = new FormData();
     formdata.append("id", id);
     formdata.append("status", newStatus);
 
+    // set par défaut le résultat de l'opé à false
+    let success = false;
+
     // fetch le fichier d'update et récupère la réponse
-    fetch("./src/api/updateStatusTrigger.php", {
-        method: "POST",
-        body: formdata
-    })
-    .then(response => response.text())
-    .then(text => {
-        console.log("Réponse PHP :", text);
+    try {
+        const response = await fetch("./src/api/updateStatusTrigger.php", {
+            method: "POST",
+            body: formdata
+        });
 
-        // Récupère la card et le filtre actif
-        const card = document.querySelector(`[data-id="${id}"]`);
-        const currentFilter = document.getElementById("offers_displayed").value;
+        const text = await response.text();
+        /* console.log("Réponse PHP :", text); */
 
-        const shouldDisappear = 
-            currentFilter === "visible_only" && 
-            (newStatus === "hidden" || newStatus === "applied");
+        success = text.trim() === "success";
 
-        // Trouve la prochaine card visible dans le DOM pour aller l'ouvrir
-        const allCards = Array.from(document.querySelectorAll('.job_card:not(.filtered_out)'));
-        const currentIndex = allCards.indexOf(card);
-        const nextCard = allCards[currentIndex + 1];
-        // s'il y a une prochaine card, nextCard vaut quelque chose => cardToOpenNext prend sa valeur
-        // si pas de prochaine card, nextCard vaut null ou undefined et donc prend la valeur de fallback (la 2e)
-        const cardToOpenNext = nextCard || allCards[currentIndex - 1];
+    } catch (error) {
+        console.error("Erreur fetch :", error);
+    }
 
-        if (shouldDisappear) {
-            // Animation de disparition puis mise à jour
-            card.style.transition = "opacity 0.3s ease";
-            card.style.opacity = "0";
+    // Stop ici si la requête a échoué
+    if (!success) {
+        showNotification("Une erreur s'est produite, veuillez réessayer.", "error");
+        return;
+    }
+
+    // Récupère la card et le filtre actif
+    const card = document.querySelector(`[data-id="${id}"]`);
+    const currentFilter = document.getElementById("offers_displayed").value;
+
+    const shouldDisappear = 
+        currentFilter === "visible_only" && 
+        (newStatus === "hidden" || newStatus === "applied");
+
+    // Trouve la prochaine card visible dans le DOM pour aller l'ouvrir
+    const allCards = Array.from(document.querySelectorAll('.job_card:not(.filtered_out)'));
+    const currentIndex = allCards.indexOf(card);
+    const nextCard = allCards[currentIndex + 1];
+    // s'il y a une prochaine card, nextCard vaut quelque chose => cardToOpenNext prend sa valeur
+    // si pas de prochaine card, nextCard vaut null ou undefined et donc prend la valeur de fallback (la 2e)
+    const cardToOpenNext = nextCard || allCards[currentIndex - 1];
+
+    if (shouldDisappear) {
+        // Animation de disparition puis mise à jour
+        card.style.transition = "opacity 0.3s ease";
+        card.style.opacity = "0";
+
+        setTimeout(() => {
+            card.style.transition = "height 0.4s ease, padding 0.4s ease, margin 0.4s ease";
+            card.style.overflow = "hidden";
+            card.style.height = card.offsetHeight + "px"; // fixe la hauteur avant animation
+            
+            requestAnimationFrame(() => {
+                card.style.height = "0";
+                card.style.padding = "0";
+                card.style.margin = "0";
+            });
 
             setTimeout(() => {
-                card.style.transition = "height 0.4s ease, padding 0.4s ease, margin 0.4s ease";
-                card.style.overflow = "hidden";
-                card.style.height = card.offsetHeight + "px"; // fixe la hauteur avant animation
-                
-                requestAnimationFrame(() => {
-                    card.style.height = "0";
-                    card.style.padding = "0";
-                    card.style.margin = "0";
-                });
+                updateCardDOM(card, newStatus);
+                card.classList.add("filtered_out"); // masquage visuel séparé
+                // Remet les styles inline pour ne pas bloquer un futur réaffichage
+                card.style = "";
 
-                setTimeout(() => {
-                    updateCardDOM(card, newStatus);
-                    card.classList.add("filtered_out"); // masquage visuel séparé
-                    // Remet les styles inline pour ne pas bloquer un futur réaffichage
-                    card.style = "";
+                // Ouvre la card suivante
+                if (cardToOpenNext) {
+                const radio = cardToOpenNext.querySelector('input[type="radio"]');
+                if (radio) radio.checked = true;
+                }
+            }, 400);
 
-                    // Ouvre la card suivante
-                    if (cardToOpenNext) {
-                    const radio = cardToOpenNext.querySelector('input[type="radio"]');
-                    if (radio) radio.checked = true;
-                    }
-                }, 400);
+        }, 300);
 
-            }, 300);
-
-        } else {
-            // Pas d'animation, juste mise à jour du DOM
-            updateCardDOM(card, newStatus);
-        }
-    })
-    .catch(error => console.error("Erreur fetch :", error));
-}
+    } else {
+        // Pas d'animation, juste mise à jour du DOM
+        updateCardDOM(card, newStatus);
+    }
+};
 
 
 function updateCardDOM(card, newStatus) {
@@ -201,11 +216,11 @@ if(refreshBtn) {
 /* Injection dynamique de l'id d'une expression dans popup suppression */
 
 function injectExpIdToErase(id) {
-    eraseBtn = document.getElementById('erase_exp_btn');
-    eraseBtn.setAttribute('href', BASE_URL + "?mode=criterias&delete_exp=" + id);
+    document.getElementById('post_erase_exp_id').setAttribute('value', id);
 }
 
-/* Injection dynamique du type d'expression à créer dans popup ajout */
+/* Injection dynamique du type d'expression à créer dans popup ajout 
+et du texte */
 function injectExpTypeToAdd(type) {
     typeExpToCreateInput = document.getElementById('post_add_type');
     typeExpToCreateInput.setAttribute('value', type);
@@ -215,7 +230,6 @@ function injectExpTypeToAdd(type) {
 const expInput = document.getElementById('exp_add_name');
 const submitBtn = document.querySelector('#add_exp_modal input[type="submit"]');
 const errorMsg = document.getElementById('exp_add_error');
-// adapte les sélecteurs à ton HTML
 
 if(expInput) {
     expInput.addEventListener('input', () => {
@@ -225,8 +239,8 @@ if(expInput) {
             errorMsg.textContent = "L'expression doit contenir au moins 3 caractères.";
             errorMsg.hidden = false;
             submitBtn.disabled = true;
-        } else if (val.length > 30) {
-            errorMsg.textContent = "L'expression ne peut pas dépasser 30 caractères.";
+        } else if (val.length > 50) {
+            errorMsg.textContent = "L'expression ne peut pas dépasser 50 caractères.";
             errorMsg.hidden = false;
             submitBtn.disabled = true;
         } else {
@@ -285,7 +299,7 @@ async function eraseExpressionInDB(id) {
 }
 
 
-/* Activation de la saisie dans le champ URL de suivi (page paramètres) */
+/* Activation de la saisie dans le champ URL de suivi + Espace CV (page paramètres) */
 
 reportingURLInput = document.getElementById('reporting_link');
 if(reportingURLInput) {
@@ -298,6 +312,22 @@ if(reportingURLInput) {
             reportingURLInput.disabled = false;
             reportingURLInput.focus();
             reportingUrlChangeBtn.value = 'Sauvegarder';
+        }
+        // Si le champ est actif, on laisse le submit se faire normalement
+    });
+}
+
+CvURLInput = document.getElementById('cv_link');
+if(CvURLInput) {
+    CvUrlChangeBtn = document.getElementById('change_cv_link_btn');
+
+    CvUrlChangeBtn.addEventListener('click', (e) => {
+        // Si le champ est désactivé, on s'apprète à modifier => on empêche le submit
+        if (CvURLInput.disabled) {
+            e.preventDefault();
+            CvURLInput.disabled = false;
+            CvURLInput.focus();
+            CvUrlChangeBtn.value = 'Sauvegarder';
         }
         // Si le champ est actif, on laisse le submit se faire normalement
     });

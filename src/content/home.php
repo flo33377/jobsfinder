@@ -5,6 +5,21 @@ print_r($allJobsArray);
 echo '<pre>'; */
 ?>
 
+<!-- Avertissement si pas d'expression clé renseignée -->
+<?php if(count($userKeywords) <= 0) : ?>
+<div class="info_no_exp">
+    <div class="no_exp_banner_message">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 14a1 1 0 0 1-1-1v-3a1 1 0 1 1 2 0v3a1 1 0 0 1-1 1zm-1.5 2.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0z"/>
+            <path d="M10.23 3.216c.75-1.425 2.79-1.425 3.54 0l8.343 15.852C22.814 20.4 21.85 22 20.343 22H3.657c-1.505 0-2.47-1.6-1.77-2.931L10.23 3.216zM20.344 20L12 4.147 3.656 20h16.688z"/>
+        </svg>
+        <p>Aucune expression clé enregistrée. Ajoutez-en pour recevoir des offres.</p>
+    </div>
+    <a href="<?= BASE_URL ?>?mode=criterias">Ajouter une expression clé</a>
+</div>
+<?php endif ?>
+
+
 <!-- Début du compteur d'offres -->
 
 <?php 
@@ -131,8 +146,8 @@ $visibleJobs = array_filter($allJobsArray, function($job) {
             <!-- Infos supp de l'annonce -->
             <div class="infos">
                 <!-- n'affiche que 800 cara et si dépasse, met "..." après -->
-                <p><?= mb_substr($job['description'], 0, 800, 'UTF-8') ?>
-                <?= mb_strlen($job['description'], 'UTF-8') > 800 ? '...' : '' ?></p>
+                <p><?= mb_substr($job['description'], 0, 600, 'UTF-8') ?>
+                <?= mb_strlen($job['description'], 'UTF-8') > 600 ? '...' : '' ?></p>
 
                 <div class="action_btn">
                     <!-- CTA Voir l'annonce -->
