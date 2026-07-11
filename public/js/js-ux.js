@@ -24,6 +24,11 @@ document.addEventListener('click', (e) => {
     if (!trigger) return;
     // si non, ne va pas plus loin
 
+    // Si le déclencheur est un lien, empêche la navigation pour juste afficher la pop-up
+    if (trigger.tagName === 'A') {
+        e.preventDefault();
+    }
+
     const popupId = trigger.dataset.popupId;
     const popup = document.getElementById(popupId);
     // récup la data et trouve la popup avec

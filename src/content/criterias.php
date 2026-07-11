@@ -159,8 +159,8 @@
       <form action method="POST">
         <input type="hidden" name="post_erase_exp_id" id="post_erase_exp_id" required>
         <div class="action_btns">
-            <button class="close_popup">Annuler</button>
-            <input type="submit" id="erase_exp_btn" value="Supprimer"></a>
+            <button type="button" class="close_popup">Annuler</button>
+            <input type="submit" class="erase_button" id="erase_exp_btn" value="Supprimer"></a>
         </div>
       </form>
     </div>
@@ -180,7 +180,7 @@
         <p id="exp_add_error" hidden></p>
 
         <div class="action_btns">
-        <button class="close_popup">Annuler</button>
+        <button type="button" class="close_popup">Annuler</button>
             <input type="submit" value="Ajouter">
         </div>
       </form>

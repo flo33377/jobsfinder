@@ -11,8 +11,15 @@ require(__DIR__ . '/../mainFunctions.php');
 
 $pdo = connect();
 
+// Passe en "paused" les users inactifs depuis plus de 30 jours
+$pdo->exec("
+    UPDATE jobsfinder_users 
+    SET import_status = 'paused'
+    WHERE last_login_at < NOW() - INTERVAL 30 DAY
+");
+
 // Remet en "pending" uniquement les users "done" ou sans statut
-// Les users "pending" ou "running" ne sont pas touchés
+// Les users "pending", "running" ou "paused" ne sont pas touchés
 $pdo->exec("
     UPDATE jobsfinder_users 
     SET import_status = 'pending', 

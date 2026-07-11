@@ -38,7 +38,7 @@ function writeLog($message) {
 /* Fonctions d'authentification */
 
 function getUserByEmail(string $email) { // retourne les infos d'un user s'il existe en base 
-    $SQLGetUserByEmail = "SELECT user_id, user_email, reporting_link FROM jobsfinder_users 
+    $SQLGetUserByEmail = "SELECT * FROM jobsfinder_users 
     WHERE user_email = :user_email";
     $pdo = connect();
     $stmtGetUserByEmail = $pdo->prepare($SQLGetUserByEmail);
@@ -148,6 +148,41 @@ function changeURLInDBByUserId( // update le lien d'un fichier de suivi d'un use
         $stmtChangeReportingUrl->execute([
             'id' => $id,
             $mode => $url
+        ]);
+        return true;
+
+    } catch(Exception $e) {
+        return false;
+    };
+}
+
+
+function updateLastLoginAtForUser( // met à jour en DB la date de dernière connexion user
+    int $userId // => user id
+    ) : bool {
+    $pdo = connect();
+    $nowFunction = NOW_FUNCTION;
+    $stmt = $pdo->prepare("
+        UPDATE jobsfinder_users 
+        SET last_login_at = {$nowFunction} 
+        WHERE user_id = ?
+    ");
+    return $stmt->execute([$userId]);
+}
+
+
+function setStatusForUser( // update le statut d'un compte utilisateur
+    string $id, // => user id
+    string $status // => statut à appliquer au user
+    ): bool { 
+    $SQLsetStatusForUser = "UPDATE jobsfinder_users 
+    SET import_status = :import_status WHERE user_id = :id";
+    $pdo = connect();
+    try {
+        $stmtsetStatusForUser = $pdo->prepare($SQLsetStatusForUser);
+        $stmtsetStatusForUser->execute([
+            'id' => $id,
+            'import_status' => $status
         ]);
         return true;
 
@@ -648,6 +683,259 @@ function createNewExpressionToUser(int $id, string $exp, string $mode) : bool { 
         return false;
     };
 }
+
+
+/* Fonctions pour l'espace CV */
+
+function getCvListForUser(int $userId) : array {
+    // Retourne un tableau de CV avec leurs métadonnées
+    // Retourne un tableau vide si le dossier n'existe pas ou est vide
+
+    $userDir = __DIR__ . "/storage/cv/user-{$userId}/";
+
+    // Si le dossier n'existe pas encore (aucun upload) => tableau vide
+    if (!is_dir($userDir)) {
+        return [];
+    }
+
+    $files = glob($userDir . "*.pdf.store");
+
+    // Si le dossier existe mais est vide => tableau vide
+    if (empty($files)) {
+        return [];
+    }
+
+    $cvList = [];
+    $formatLastModification = "d/m";
+
+    foreach ($files as $filePath) {
+        $filename = basename($filePath); // ex : "CV.pdf"
+        $nameWithoutExt = str_replace('.pdf.store', '', basename($filePath)); // Ex : "CV"
+        $lastModification = date($formatLastModification, filemtime($filePath));
+
+        $cvList[] = [
+            'filename'     => $filename,           // nom complet avec extension (pour les actions PHP)
+            'display_name' => $nameWithoutExt,     // nom affiché dans l'UI (sans .pdf)
+            'size'         => filesize($filePath), // taille en octets
+            'modified_at_unix' => filemtime($filePath), // timestamp Unix de dernière modification
+            'modified_at_date' => $lastModification // dernière modif en format date
+        ];
+    }
+
+    // Tri par date de modification décroissante (le plus récent en premier)
+    usort($cvList, fn($a, $b) => $b['modified_at_unix'] - $a['modified_at_unix']);
+
+    return $cvList;
+}
+
+function addCvForUser( // télécharge le cv user sur le serveur
+    // Retourne ['success' => bool, 'message' => string]
+    int $userId, // => user_id
+    array $file, // => fichier à télécharger
+    string $cvName // nom à donner au fichier côté serveur
+    ) : array {
+
+    $userDir = __DIR__ . "/storage/cv/user-{$userId}/";
+
+    // Crée le dossier user si inexistant
+    if (!is_dir($userDir)) {
+        mkdir($userDir, 0755, true);
+        // 0755 = dossier lisible/exécutable par tous, modifiable uniquement par le propriétaire
+        // true = crée les dossiers parents si nécessaires
+    }
+
+    // Check type MIME réel (check le contenu du fichier pour comprendre son type, 
+    // évite de télécharger un .exe renommé en .pdf par ex)
+    $mimeType = mime_content_type($file['tmp_name']);
+    if ($mimeType !== 'application/pdf') {
+        return ['success' => false, 'message' => "Seuls les fichiers PDF sont acceptés."];
+    }
+
+    // Check poids du fichier (2 Mo max)
+    $maxFileSize = 2 * 1024 * 1024; // 2 Mo en octets
+    if ($file['size'] > $maxFileSize) {
+        return ['success' => false, 'message' => "Votre fichier ne peut pas dépasser 2 Mo."];
+    }
+
+    // Check nombre de fichiers (10 max)
+    $storage = getCvStorageForUser($userId, $file);
+    if ($storage['fileCount'] >= 10) {
+        return ['success' => false, 'message' => "Vous ne pouvez pas télécharger plus de 10 CV."];
+    }
+
+    // Check quota total (6 Mo max)
+    if ($storage['totalSize'] > (6 * 1024 * 1024)) {
+        return ['success' => false, 'message' => "Vous avez atteint votre quota d'espace (6 Mo)."];
+    }
+
+    // Sanitize le nom saisi par le user
+    $sanitizedName = sanitizeCvName($cvName);
+    if (empty($sanitizedName)) {
+        return ['success' => false, 'message' => "Le nom saisi n'est pas valide."];
+    }
+
+    // Check si le nom est dispo, si non crée un nom alternatif (ajoute + (x))
+    $finalName = getAvailableCvName($userDir, $sanitizedName);
+
+    // Déplace le fichier uploadé vers le dossier du user
+    $destination = $userDir . $finalName . ".pdf.store";
+    // à vérifier : exécute move_upload_file, et s'il renvoie false, traite l'erreur
+    if (!move_uploaded_file($file['tmp_name'], $destination)) {
+        return ['success' => false, 'message' => "Une erreur s'est produite lors de l'enregistrement."];
+    }
+
+    return ['success' => true, 'message' => "CV ajouté avec succès."];
+}
+
+
+function getCvStorageForUser( // renvoie le poids déjà utilisé dans le cv storage pour un user
+    // et le nombre de fichier déjà stockés
+    // Prends en compte s'il est fourni, le poids du fichier qu'on veut upload
+    // Retourne ['totalSize' => int, 'fileCount' => int]
+    int $userId, // => user_id
+    ?array $pendingFile = null // ? => optionnel, si pas fourni, prend la valeur null
+    ) : array {
+    
+    $userDir = __DIR__ . "/storage/cv/user-{$userId}/";
+    
+    if (!is_dir($userDir)) {
+        return ['totalSize' => 0, 'fileCount' => 0];
+    }
+    
+    // glob sélectionne dans un array tous les fichiers de l'url qui checkent les critères
+    $existingFiles = glob($userDir . "*.pdf.store");
+    $fileCount = count($existingFiles);
+    
+    $totalSize = 0;
+    foreach ($existingFiles as $file) {
+        $totalSize += filesize($file);
+    }
+    
+    // Si un fichier en cours d'upload est fourni, on l'inclut dans le calcul
+    if ($pendingFile !== null) {
+        $totalSize += $pendingFile['size'];
+    }
+    
+    return ['totalSize' => $totalSize, 'fileCount' => $fileCount];
+}
+
+
+function sanitizeCvName( // supprime les caractères spéciaux et les points et renvoie la version sans
+    string $name // nom qu'on souhaite donner au fichier
+    ) : string {
+        $name = str_replace(["'", "’", '"'], ' ', $name);
+
+        // Whitelist : lettres (accents inclus), chiffres, espace, tiret, underscore, point
+        // \p{L} = toute lettre Unicode (couvre é, à, ç, ñ, etc. sans les lister une par une)
+        // \p{N} = tout chiffre Unicode
+        $name = preg_replace('/[^\p{L}\p{N}\s\-_.]/u', '', $name);
+    
+        // Normalise les espaces multiples (créés par les remplacements ci-dessus) en un seul
+        $name = preg_replace('/\s+/', ' ', $name);
+    
+        return trim($name, ' .');
+}
+
+function getAvailableCvName( // check si le nom du fichier est déjà pris côté serveur
+    // renvoie le nom qui est dispo après check
+    string $dir, // => emplacement du dossier du user 
+    string $baseName // => nom qu'on souhaite donner au fichier
+    ) : string {
+
+    $candidate = $baseName;
+    $i = 1;
+    // Boucle pour voir si le nom existe, si oui, rajoute (1)
+    // puis boucle encore pour voir la si version avec (1) existe aussi, si oui remplace (1) par (2), etc.
+    // $candidate => nom potentiel à donner VS $basename => la racine sur laquelle appliquer le (x)
+    while (file_exists($dir . $candidate . ".pdf.store")) {
+        $candidate = $baseName . " ($i)";
+        $i++;
+    }
+    return $candidate;
+}
+
+function deleteExistingCvFromCvName( // supprime un cv à partir de son nom et du user id de son proprio
+    // Retourne ['success' => bool, 'message' => string]
+    string $cvName, // => Nom du cv à supprimer
+    int $userId // => user id du demandeur de la suppression
+    ) : array {
+
+    $userDir = __DIR__ . "/storage/cv/user-{$userId}/";
+
+    // Sécurité : on s'assure de ne garder que le nom du fichier
+    // si par ex quelqu'un avait mis un chemin complet dedans
+    $cvName = basename($cvName);
+
+    // on constitue le chemin complet du fichier recherché
+    $filePath = $userDir . $cvName;
+
+    // si ne trouve pas le dossier => erreur
+    if(!is_dir($userDir)) {
+        return ['success' => false, 'message' => "Dossier introuvable."];
+    }
+    // si le fichier n'existe pas dans le répertoire du demandeur (tentative d'usurpation d'id)
+    if(!file_exists($filePath)) {
+        return ['success' => false, 'message' => "Fichier introuvable."];
+    }
+
+    // Suppression
+    if (!unlink($filePath)) {
+        return ['success' => false, 'message' => "Erreur lors de la suppression."];
+    }
+
+    return ['success' => true, 'message' => "CV supprimé avec succès."];
+}
+
+
+function updateCvForUser( // remplace un cv pour un nouveau
+    // Retourne ['success' => bool, 'message' => string]
+    int $userId, // => user id
+    array $file, // => nouveau cv
+    string $existingFilename // nom de fichier exact à remplacer (ex: "CV agence - CP web.pdf")
+    ) : array {
+
+    $userDir = __DIR__ . "/storage/cv/user-{$userId}/";
+
+    // Sécurité : basename() empêche toute tentative de path traversal (../../etc)
+    $existingFilename = basename($existingFilename);
+    // reconstitue l'url complète avec fiabilité
+    $existingPath = $userDir . $existingFilename;
+
+    // Vérifie que le fichier à remplacer existe bien et appartient à ce user
+    if (!file_exists($existingPath)) {
+        return ['success' => false, 'message' => "Le fichier à mettre à jour est introuvable."];
+    }
+
+    // Check type MIME réel
+    $mimeType = mime_content_type($file['tmp_name']);
+    if ($mimeType !== 'application/pdf') {
+        return ['success' => false, 'message' => "Seuls les fichiers PDF sont acceptés."];
+    }
+
+    // Check poids du nouveau fichier (2 Mo max)
+    $maxFileSize = 2 * 1024 * 1024;
+    if ($file['size'] > $maxFileSize) {
+        return ['success' => false, 'message' => "Votre fichier ne peut pas dépasser 2 Mo."];
+    }
+
+    // Check quota total, on retire le poids de l'ancien fichier avant de comparer,
+    // puisqu'il va être remplacé et ne doit pas compter deux fois
+    $storage = getCvStorageForUser($userId, $file);
+    $oldFileSize = filesize($existingPath);
+    $projectedTotal = $storage['totalSize'] - $oldFileSize;
+
+    if ($projectedTotal > (6 * 1024 * 1024)) {
+        return ['success' => false, 'message' => "Le poids total de vos fichiers ne peut pas excéder 6 Mo."];
+    }
+
+    // Remplace le fichier => move_uploaded_file écrase la destination si elle existe déjà
+    if (!move_uploaded_file($file['tmp_name'], $existingPath)) {
+        return ['success' => false, 'message' => "Une erreur s'est produite lors de la mise à jour."];
+    }
+
+    return ['success' => true, 'message' => "CV mis à jour avec succès."];
+}
+
 
 
 ?>

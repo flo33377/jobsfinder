@@ -21,6 +21,9 @@
 
     --color-lightred: #FCEBEB;
     --color-middle-red: #791F1F;
+
+    --color-light-green: rgba(83, 201, 83, 0.1);
+    --color-middle-green: #468A46;
 }
 
 html {
@@ -54,6 +57,15 @@ button {
     cursor: pointer;
     padding: unset;
     margin: unset;
+}
+
+progress {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: none; /* Remove default border in Firefox */
+    width: 100%;
+    height: 10px;
 }
 
 body {
@@ -136,6 +148,12 @@ p {
 
 .container.emphasis .interaction_btn a {
     background-color: var(--color-bg);
+    font-size: 0.9em;
+}
+
+.container_title.space_between {
+    justify-content: space-between;
+    gap: 10px;
 }
 
 .container svg {
@@ -558,6 +576,39 @@ dialog .close_popup.close_desktop_only {
     dialog .close_popup.close_desktop_only {
         display: none;
     }
+    dialog {
+        min-width: 80%;
+    }
+}
+
+dialog .action_btns {
+    align-self: flex-end;
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    margin-top: 20px;
+    justify-content: flex-end;
+}
+
+/* Case desktop */
+@media screen and (min-width: 767px) { 
+    dialog .action_btns {
+        align-self: center;
+    }
+}
+
+dialog .action_btns input[type="submit"], 
+dialog .action_btns button {
+    border: 1px solid rgba(179, 179, 181, 0.6);
+    border-radius: 8px;
+    font-weight: 400;
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+dialog .action_btns .erase_button {
+    background-color: #CD3C3C;
+    color: white;
 }
 
 
@@ -954,6 +1005,53 @@ dialog .close_popup.close_desktop_only {
 
 /* HP */
 
+
+.pause-banner {
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--color-lightred);
+    border: 0.5px solid var(--color-middle-red);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.pause-banner-text {
+    flex: 1;
+    width: 100%;
+    text-align: center;
+}
+
+.pause-banner-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-middle-red);
+    margin: 0 0 4px;
+}
+
+.pause-banner-desc {
+    font-size: 13px;
+    color: var(--color-middle-red);
+    margin: 0;
+    opacity: 0.85;
+    line-height: 1.5;
+}
+
+.pause-banner-cta {
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-bg);
+    background: var(--color-middle-red);
+    border-radius: 10px;
+    padding: 7px 14px;
+    text-decoration: none;
+    flex-shrink: 0;
+    align-self: center;
+}
 
 #job_board {
     display: flex;
@@ -1397,28 +1495,220 @@ details[open] summary::after {
 
 /* CV Storage */
 
-h1.subpage_title {
-    margin-bottom: 25px;
+.container.cv_size_block {
+    max-width: 500px;
+    background-color: var(--color-darklightbg);
+    border: 1px solid rgba(179, 179, 181, 0.2);
 }
 
-.cv_storage_cta {
-    margin: 10px 0 50px 0;
+.container.cv_size_block.max_size_reached {
+    background-color: var(--color-lightred);
 }
 
-.cv_downloader_container {
+.cv_size_block.max_size_reached .warning {
+    color: var(--color-middle-red);
+    font-weight: bold;
+}
+
+.container.cv_size_block div {
+    width: 100%;
+    font-size: 0.8em;
+}
+
+.container.cv_size_block progress {
+    width: 100%;
+    height: 7px;
+}
+
+.container.container.cv_size_block progress::-webkit-progress-bar, 
+.container.container.cv_size_block progress {
+    /* Target la barre complète sur 
+    1er sélecteur => moteurs type Chrome et Safari 
+    2e => moteurs type Firefox */
+    background-color: rgba(179, 179, 181, 0.3);
+    border-radius: 20px;
+}
+
+.container.container.cv_size_block progress::-webkit-progress-value {
+    /* Target la partie filled sur moteurs type Chrome et Safari */ 
+    background-color: var(--color-tertiary);
+    border-radius: 20px;
+}
+ 
+.container.container.cv_size_block progress::-moz-progress-bar {
+    /* Target la partie filled sur moteurs type Firefox */
+    background-color: var(--color-tertiary);
+    border-radius: 20px;
+}
+
+.cv_add_button {
+    width: 90%;
+    max-width: 500px;
+    font-size: 0.9em;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--color-subtext);
+    background-color: var(--color-bg);
+    border-radius: 5px;
+    padding: 5px 10px;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+/* Case mobile */
+@media screen and (max-width: 767px) {
+    .cv_add_button {
+        margin-bottom: 15px;
+    }
+}
+
+.cv_add_button:hover {
+    background-color: var(--color-darklightbg);
+}
+
+.cv_add_button svg, 
+.container .cv_icon, 
+.container .erase_cv_button, 
+#upload_cv_modal .input_file_bloc svg, 
+#update_cv_modal .input_file_update_bloc svg, 
+.cv_management_btns svg {
+    height: 1em;
+    width: auto;
+    display: block;
+    flex-shrink: 0;
+}
+
+/* Case desktop */
+@media screen and (min-width: 767px) {
+    .cv_listing_bloc {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        width: 90%;
+        margin-top: 20px;
+    }
+    .container.cv_listing_item {
+        max-width: 500px;
+        min-width: 300px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.cv_listing_bloc {
+    width: 90%;
+}
+
+.container.cv_listing_item {
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.cv_listing_bloc .container_title {
+    align-items: flex-start;
+}
+
+.cv_listing_bloc .container_title h3 {
+    align-items: flex-start;
+}
+
+.container_title .cv_subinfos {
+    font-size: 0.8em;
+    font-weight: 400;
+}
+
+.container .cv_icon, 
+.container .erase_cv_button {
+    height: fit-content;
+    width: fit-content;
+    padding: 8px;
+    background-color: var(--color-darklightbg);
+    border-radius: 5px;
+}
+
+.container .erase_cv_button {
+    background-color: var(--color-lightred);
+    cursor: pointer;
+}
+
+.container .erase_cv_button svg {
+    fill: var(--color-middle-red);
+}
+
+#upload_cv_modal input[type='file'], 
+#update_cv_modal input[type='file'] {
+    display: none;
+}
+
+#upload_cv_modal .input_file_bloc, 
+#update_cv_modal .input_file_update_bloc {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    width: 80%;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px 10px;
+    border-radius: 10px;
+    border: 1px dashed var(--color-subtext);
+    margin: 10px 0;
 }
 
-.cv_downloader_title {
-    text-decoration: underline;
-    transition: all 0.2s ease-in-out;
+#upload_cv_modal .input_file_bloc label, 
+#update_cv_modal .input_file_update_bloc label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
 }
 
-.cv_downloader_title:hover {
-    color: var(--color-tertiary);
+#upload_cv_modal .input_file_bloc.completed, 
+#update_cv_modal .input_file_update_bloc.completed {
+    background-color: var(--color-light-green);
+    color: var(--color-middle-green);
+}
+
+#cv_uploaded_name {
+    text-align: center;
+}
+
+#upload_cv_modal input[type="text"] {
+    width: 100%;
+}
+
+.cv_management_btns {
+    margin-top: 5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex: 1;
+    width: 100%;
+}
+
+.cv_management_btns div {
+    border: 1px solid rgba(179, 179, 181, 0.6);
+    border-radius: 5px;
+    padding: 5px 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.9em;
+    min-width: 50%;
 }
 
 
@@ -1432,10 +1722,6 @@ h1.subpage_title {
     width: 90%;
     font-size: 0.9em;
     margin-bottom: 10px;
-}
-
-.container_title.space_between {
-    justify-content: space-between;
 }
 
 .keywords_counter {
@@ -1542,41 +1828,8 @@ h1.subpage_title {
     font-weight: 600;
 }
 
-#erase_exp_modal .action_btns, 
-#add_exp_modal .action_btns {
-    align-self: flex-end;
-    display: flex;
-    flex-direction: row;
-    gap: 15px;
-    margin-top: 20px;
-    justify-content: flex-end;
-}
-
-/* Case desktop */
-@media screen and (min-width: 767px) {
-    #erase_exp_modal .action_btns, 
-    #add_exp_modal .action_btns {
-        align-self: center;
-    }
-}
-
-#erase_exp_modal .action_btns input[type="submit"], 
-#erase_exp_modal .action_btns button, 
-#add_exp_modal .action_btns button,
-#add_exp_modal .action_btns input[type="submit"] {
-    border: 1px solid rgba(179, 179, 181, 0.6);
-    border-radius: 8px;
-    font-weight: 400;
-    padding: 10px 15px;
-    cursor: pointer;
-}
-
-#erase_exp_modal #erase_exp_btn {
-    background-color: #CD3C3C;
-    color: white;
-}
-
-#add_exp_modal .action_btns input[type="submit"] {
+#add_exp_modal .action_btns input[type="submit"], 
+#upload_cv_modal .action_btns input[type="submit"] {
     font-weight: 600;
 }
 
@@ -1643,3 +1896,59 @@ h1.subpage_title {
 .container.disconnect_container h3 svg {
     fill: #791F1F;
 }
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+.setting-info {
+    flex: 1;
+}
+
+.setting-label {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--color-text);
+    margin: 0 0 4px;
+}
+
+/* Toggle */
+.toggle {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 28px;
+    background: var(--color-subtext);
+    border-radius: 14px;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.toggle.active {
+    background: var(--color-tertiary);
+}
+
+.toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.toggle.active .toggle-thumb {
+    transform: translateX(20px);
+}
+
+

@@ -31,8 +31,11 @@ if ($user) {
     session_regenerate_id(true);
     $_SESSION['user_id'] = $user['user_id'];
     $_SESSION['user_email'] = $email;
-    $user['reporting_link'] ? $_SESSION['reporting_link'] = $user['reporting_link'] : $_SESSION['reporting_link'] = NULL;
-    $user['cv_link'] ? $_SESSION['cv_link'] = $user['cv_link'] : $_SESSION['cv_link'] = NULL;
+    $_SESSION['reporting_link'] = $user['reporting_link'] ?? NULL;
+    $_SESSION['cv_link'] = $user['cv_link'] ?? NULL;
+
+    updateLastLoginAtForUser($user['user_id']);
+
     header('Location: ' . BASE_URL);
 } else {
     // Email inconnu en DB

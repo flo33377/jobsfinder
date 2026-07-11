@@ -5,8 +5,21 @@ print_r($allJobsArray);
 echo '<pre>'; */
 ?>
 
+
+<?php if($userIsPaused) : ?>
+<!-- Avertissement si compte en pause -->
+<div class="pause-banner">
+    <div class="pause-banner-text">
+        <p class="pause-banner-title">Votre recherche est en pause</p>
+        <p class="pause-banner-desc">Aucune nouvelle offre n'est importée. Relancez un import manuel ou réactivez votre compte dans les paramètres pour reprendre.</p>
+    </div>
+    <a href="<?= BASE_URL ?>?action=unset_pause" class="pause-banner-cta">Réactiver</a>
+</div>
+<?php endif ?>
+
+
+<?php if(!$userIsPaused && count($userKeywords) <= 0) : ?>
 <!-- Avertissement si pas d'expression clé renseignée -->
-<?php if(count($userKeywords) <= 0) : ?>
 <div class="info_no_exp">
     <div class="no_exp_banner_message">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

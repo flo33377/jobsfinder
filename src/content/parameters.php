@@ -66,6 +66,32 @@
 
     <div class="container">
         <div class="container_title">
+            <h3>
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10,21h4a2,2,0,0,1-4,0ZM20,9H18.414l2.293-2.293A1,1,0,0,0,20,5H16a1,1,0,0,0,0,2h1.586L15.293,9.293A1,1,0,0,0,16,11h4a1,1,0,0,0,0-2Zm.707,8.293L19,15.586V13H17v3a1,1,0,0,0,.293.707l.293.293H6.414l.293-.293A1,1,0,0,0,7,16V10a4.98,4.98,0,0,1,5.912-4.912L14.5,3.5a.913.913,0,0,0-.168-.1A7,7,0,0,0,13,3.084V2a1,1,0,0,0-2,0V3.08A7,7,0,0,0,5,10v5.586L3.293,17.293A1,1,0,0,0,4,19H20a1,1,0,0,0,.707-1.707Z"/>
+                </svg>
+                Mise en pause
+            </h3>
+        </div>
+
+        <p class="comments">
+            Mettre votre compte en pause suspend les imports automatiques. Vos offres actuelles restent disponibles et vous pouvez réactiver votre compte à tout moment.
+        </p>
+        <div class="setting-row">
+            <div class="setting-info">
+                <p class="setting-label">Mise en pause : <?= $userIsPaused ? 'Activée' : 'Désactivée' ?></p>
+            </div>
+            <a <?= $userIsPaused ? "href='" . BASE_URL . "?action=set_pause'" : ''?> 
+            class="toggle <?= !$userIsPaused ? '' : 'active' ?>"
+            <?= !$userIsPaused ? 'data-popup-id="pause_confirm_modal"' : '' ?>
+            aria-label="<?= $userIsPaused ? 'Réactiver la recherche' : 'Mettre en pause' ?>">
+                <span class="toggle-thumb"></span>
+            </a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="container_title">
         <h3>
         <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
             <g>
@@ -107,6 +133,18 @@
         </div>
     </div>
 
-
 </div>
+
+
+<dialog id="pause_confirm_modal">
+    <div class="modal_content">
+        <button class="close_popup close_desktop_only">X</button>
+        <p class="modal_title">Mettre la recherche en pause ?</p>
+        <p class="modal_desc">Vous ne recevrez plus de nouvelles offres jusqu'à réactivation. Vos offres actuelles restent accessibles.</p>
+        <div class="action_btns">
+            <button class="close_popup">Annuler</button>
+            <a href="<?= BASE_URL ?>?action=set_pause" class="standard_cta">Confirmer</a>
+        </div>
+    </div>
+</dialog>
 

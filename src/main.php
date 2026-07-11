@@ -16,7 +16,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 
-/* var_dump($_SESSION); */
+/* var_dump($_POST); */
 /* unset($_SESSION['user_id']); */
 /* session_destroy(); */
 
@@ -78,6 +78,18 @@ switch ($method) {
                 $page = "save_cv_link"; // input caché pour sauvegarder le lien de l'espace CV
             }
 
+            if(isset($_POST['post_upload_cv']) && !empty($_FILES['cv_upload_file'])) {
+                $page = "cv_uploaded"; // input caché pour uploader un cv
+            }
+
+            if(isset($_POST['post_delete_cv_name'])) {
+                $page = "cv_to_delete"; // input caché pour supprimer un cv stocké
+            }
+
+            if(isset($_POST['post_update_cv_name'])) {
+                $page = "cv_to_update"; // input caché pour updater un cv stocké
+            }
+
         }
         break;
 
@@ -113,6 +125,14 @@ switch ($method) {
             $page = "parameters" ;
         }
 
+        if(isset($_GET['action']) && ($_GET['action'] === "set_pause")) { // activation mise en pause du compte
+            $page = "set_pause" ;
+        }
+
+        if(isset($_GET['action']) && ($_GET['action'] === "unset_pause")) { // désactivation mise en pause du compte
+            $page = "unset_pause" ;
+        }
+
         if(isset($_GET['action']) && ($_GET['action'] === "disconnect")) { // demande de deconnexion user
             $page = "disconnect" ;
         }
@@ -145,6 +165,8 @@ switch($page){
             $content = HOME;
             $allJobsArray = getAllJobsByUser($_SESSION['user_id']);
             $userKeywords = getKeywordsByUserId($_SESSION['user_id'], "key");
+            $userInfos = getUserByEmail($_SESSION['user_email']);
+            $userIsPaused = $userInfos['import_status'] === "paused" ? true : false;
         } else {
             // => pas de user_id, normalement ne devrait pas être possible mais
             // checker quand même ce cas particulier
@@ -154,10 +176,55 @@ switch($page){
         break;
     
     case "cv_storage" : // affichage de la page consultation des cv
+        if (!empty($_SESSION['notif_message'])) {
+            $server_notif_message = $_SESSION['notif_message'];
+            $server_notif_type = $_SESSION['notif_type'];
+            unset($_SESSION['notif_message']);
+            unset($_SESSION['notif_type']);
+        }
         $content = CV_STORAGE;
+        $cvList = getCvListForUser($_SESSION['user_id']);
+        $cvStorage = getCvStorageForUser($_SESSION['user_id']);
+        $usedMo = round($cvStorage['totalSize'] / (1024 * 1024), 1);
         $currentPage = "cv";
         break;
     
+    case "cv_uploaded" : // enregistrement d'un nouveau cv
+        if(empty($_POST['cv_upload_name'])) {
+            $_SESSION['notif_message'] = "Nom de fichier invalide.";
+            $_SESSION['notif_type'] = "error";
+        } else {
+            $uploadAttempt = addCvForUser($_SESSION['user_id'], $_FILES['cv_upload_file'], $_POST['cv_upload_name']);
+            $_SESSION['notif_message'] = $uploadAttempt['message'];
+            $_SESSION['notif_type'] = $uploadAttempt['success'] ? "success" : "error";
+        }
+        header('Location: ' . BASE_URL . '?mode=cv_storage');
+        exit;
+    
+    case "cv_to_delete" : // suppression d'un cv
+        if(empty($_POST['post_delete_cv_name'])) {
+            $_SESSION['notif_message'] = "Une erreur est survenue, merci de ré-essayer.";
+            $_SESSION['notif_type'] = "error";
+        } else {
+            $deleteAttempt = deleteExistingCvFromCvName($_POST['post_delete_cv_name'], $_SESSION['user_id']);
+            $_SESSION['notif_message'] = $deleteAttempt['message'];
+            $_SESSION['notif_type'] = $deleteAttempt['success'] ? "success" : "error";
+        }
+        header('Location: ' . BASE_URL . '?mode=cv_storage');
+        exit;
+    
+    case "cv_to_update" : // update d'un cv existant
+        if(empty($_POST['post_update_cv_name'])) {
+            $_SESSION['notif_message'] = "Une erreur est survenue, merci de ré-essayer.";
+            $_SESSION['notif_type'] = "error";
+        } else {
+            $updateAttempt = updateCvForUser($_SESSION['user_id'], $_FILES['cv_update_file'], $_POST['post_update_cv_name']);
+            $_SESSION['notif_message'] = $updateAttempt['message'];
+            $_SESSION['notif_type'] = $updateAttempt['success'] ? "success" : "error";
+        }
+        header('Location: ' . BASE_URL . '?mode=cv_storage');
+        exit;
+
     case "log_diary" : // affichage du journal de log
         $content = LOG_DIARY;
         $currentPage = "logs";
@@ -238,10 +305,40 @@ switch($page){
             unset($_SESSION['notif_type']);
         }
         $content = PARAMETERS;
+        $userInfos = getUserByEmail($_SESSION['user_email']);
+        $userIsPaused = $userInfos['import_status'] === "paused" ? true : false;
         $userKeywords = getKeywordsByUserId($_SESSION['user_id'], "key");
         $currentPage = "parameters";
         break;
     
+    case "set_pause" : // met en pause le compte user
+        $successUpdateStatus = setStatusForUser($_SESSION['user_id'], 'paused');
+        if($successUpdateStatus) {
+            // si opération réussi => notif de succès
+            $_SESSION['notif_message'] = "Compte mis en pause.";
+            $_SESSION['notif_type'] = "success";
+        } else {
+            // si opération échouée => notif d'erreur
+            $_SESSION['notif_message'] = "Une erreur s'est produite, merci de ré-essayer.";
+            $_SESSION['notif_type'] = "error";
+        }
+        header('Location: ' . BASE_URL . '?mode=parameters');
+        exit;
+    
+    case "unset_pause" : // met en pause le compte user
+        $successUpdateStatus = setStatusForUser($_SESSION['user_id'], 'done');
+        if($successUpdateStatus) {
+            // si opération réussi => notif de succès
+            $_SESSION['notif_message'] = "Compte réactivé avec succès.";
+            $_SESSION['notif_type'] = "success";
+        } else {
+            // si opération échouée => notif d'erreur
+            $_SESSION['notif_message'] = "Une erreur s'est produite, merci de ré-essayer.";
+            $_SESSION['notif_type'] = "error";
+        }
+        header('Location: ' . BASE_URL . '?mode=parameters');
+        exit;
+
     case "save_reporting_link" : // tentative de sauvegarde d'un lien de suivi des candidatures
         if(!filter_var($_POST['reporting_link'], FILTER_VALIDATE_URL)) {
             $_SESSION['notif_message'] = "L'URL saisie n'est pas valide.";

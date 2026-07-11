@@ -175,6 +175,12 @@ if(refreshBtn) {
             const response = await fetch('./src/api/globalDBUpdate.php');
             const data = await response.json();
 
+            // Si le serveur a renvoyé une erreur métier (catch côté PHP)
+            if (data.error) {
+                // throw une erreur, donc arrête le script et part dans le catch
+                throw new Error(data.error);
+            }
+
             const newOffers = data.inserted;
             if(newOffers >= 1) {
                 refreshBtn.textContent = `✓ ${data.inserted} nouvelles offres trouvées`;
@@ -332,4 +338,103 @@ if(CvURLInput) {
         // Si le champ est actif, on laisse le submit se faire normalement
     });
 }
+
+
+/* Fonctions pour l'Espace CV*/
+
+    // Injection dynamique du nom du cv à supprimer dans popup suppression
+function injectCvNameToDelete(CvName) {
+    cvNameToDeleteInput = document.getElementById('post_delete_cv_name');
+    cvNameToDeleteInput.setAttribute('value', CvName);
+}
+
+    // Injection du nom du fichier une fois uploadé dans le champ file + le texte --> ajout de cv
+const fileInputAdd = document.getElementById('cv_upload_file');
+if(fileInputAdd) {
+    const fileNameDisplay = document.getElementById('cv_uploaded_name');
+    const customNameInput = document.getElementById('cv_upload_name');
+    const fileInputAddBloc = document.getElementById('input_file_bloc');
+
+    fileInputAdd.addEventListener('change', function () {
+
+        if (this.files.length === 0) return;
+
+        const file = this.files[0];
+        let fileName = file.name;
+
+        // Affichage dans le <p>
+        fileNameDisplay.textContent = fileName;
+
+        // Ajout de la classe filled
+        fileInputAddBloc.classList.add('completed');
+
+        // Enleve l'extension pour pré-remplir le champ
+        let nameWithoutExtension = fileName.replace(/\.[^/.]+$/, "");
+
+        if (!customNameInput.value) {
+            customNameInput.value = nameWithoutExtension;
+        }
+    });
+}
+
+    // Injection dynamique du nom du cv à remplacer par un autre dans popup d'update
+function injectCvNameToUpdate(CvName) {
+    cvNameToUpdateInput = document.getElementById('post_update_cv_name');
+    cvNameToUpdateInput.setAttribute('value', CvName);
+    cvNameWithoutStoreExt = CvName.replace('.store', '');
+    document.getElementById('cv_to_update').textContent = cvNameWithoutStoreExt;
+}
+
+// Injection du nom du fichier une fois uploadé dans le champ file --> update de cv
+const fileInputUpdate = document.getElementById('cv_update_file');
+if(fileInputUpdate) {
+    const fileInputUpdateBloc = document.getElementById('input_file_update_bloc');
+    const fileNameDisplay = document.getElementById('cv_update_name');
+
+    fileInputUpdate.addEventListener('change', function () {
+
+        if (this.files.length === 0) return;
+
+        const file = this.files[0];
+        let fileName = file.name;
+
+        // Affichage dans le <p>
+        fileNameDisplay.textContent = fileName;
+
+        // Ajout de la classe filled
+        fileInputUpdateBloc.classList.add('completed');
+    });
+}
+
+/* Mécanisme de download de CV */
+let pendingDownloadFilename = ""; // stocke le vrai nom de fichier entre l'ouverture et le clic
+
+function prepareDownloadModal(button) {
+    // récupère le nom de base du fichier
+    pendingDownloadFilename = button.dataset.filename;
+    // injecte ce nom dans l'input type text
+    document.getElementById('download_cv_name_input').value = button.dataset.displayname;
+}
+
+// Au clic sur le bouton de confirmation dans la popup => construit le lien
+downloadCVConfirmButton = document.getElementById('download_cv_confirm_btn');
+if(downloadCVConfirmButton) {
+    downloadCVConfirmButton.addEventListener('click', () => {
+        const chosenName = document.getElementById('download_cv_name_input').value;
+        const url = "src/api/view_cv.php?file=" 
+            + encodeURIComponent(pendingDownloadFilename) 
+            + "&action=download&name=" 
+            + encodeURIComponent(chosenName);
+        
+        document.getElementById('download_cv_confirm_btn').setAttribute('href', url);
+
+        // + fermeture de la popup et affiche une banner
+        downloadPopup = document.getElementById('download_cv_modal');
+        closePopup(downloadPopup);
+        showNotification("Téléchargement en cours", "success");
+    });
+}
+
+
+
 

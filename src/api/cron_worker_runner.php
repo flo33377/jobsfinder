@@ -41,7 +41,7 @@ $keywords     = array_column(getKeywordsByUserId($userId, 'key'), 'expression');
 $blockedWords = array_column(getKeywordsByUserId($userId, 'blacklist'), 'expression');
 
 if (!empty($keywords)) {
-    cleanupJobsInDB($userId);
+    cleanupJobsInDBForUser($userId);
     importAdzunaOffersForUser($userId, $keywords, $blockedWords);
     importFranceTravailOffersForUser($userId, $keywords, $blockedWords);
 }
