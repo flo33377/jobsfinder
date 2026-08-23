@@ -166,6 +166,74 @@ if(btnUp) {
     });
 }
 
+
+/* PAGE USERS - Fonctionnement fonction search */
+
+const searchInput = document.getElementById('search_users');
+const dropdown = document.getElementById('search_dropdown');
+const userRows = document.querySelectorAll('.admin-table-row');
+
+if (searchInput && dropdown && userRows.length > 0) {
+
+    // Extrait les données depuis les lignes déj du tableau dans le DOM
+    const users = [...userRows].map(row => ({
+        name:    row.querySelector('.user-name')?.textContent.trim() || '',
+        email:   row.querySelector('.user-email')?.textContent.trim() || '',
+        url:     row.dataset.url
+    }));
+
+    searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase().trim();
+
+        // Cache le dropdown si champ vide
+        if (query === '') {
+            dropdown.hidden = true;
+            dropdown.innerHTML = '';
+            return;
+        }
+
+        const matches = users.filter(user =>
+            user.name.toLowerCase().includes(query) ||
+            user.email.toLowerCase().includes(query)
+        );
+
+        dropdown.innerHTML = '';
+
+        if (matches.length === 0) {
+            dropdown.innerHTML = '<p class="search-dropdown-empty">Aucun résultat</p>';
+        } else {
+            matches.forEach(user => {
+                const item = document.createElement('a');
+                item.classList.add('search-dropdown-item');
+                item.href = user.url;
+                item.innerHTML = `
+                    <span class="item-name">${user.name || 'Sans nom'}</span>
+                    <span class="item-email">${user.email}</span>
+                `;
+                dropdown.appendChild(item);
+            });
+        }
+
+        dropdown.hidden = false;
+    });
+
+    // Ferme le dropdown si clic en dehors
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.hidden = true;
+        }
+    });
+
+    // Ferme le dropdown si Échap
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            dropdown.hidden = true;
+            searchInput.value = '';
+        }
+    });
+}
+
+
     /* CAROUSEL EN HP */
 
 // récup les éléments

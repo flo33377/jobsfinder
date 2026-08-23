@@ -35,9 +35,11 @@ function writeLog($message) {
     file_put_contents($logFile, "[$timestamp] $message\n", FILE_APPEND);
 }
 
-/* Fonctions d'authentification */
+/* Fonctions liées aux users */
 
-function getUserByEmail(string $email) { // retourne les infos d'un user s'il existe en base 
+function getUserByEmail( // retourne les infos d'un user s'il existe en base, sinon renvoie false
+    string $email // => email du user à chercher
+    ) : array|false {
     $SQLGetUserByEmail = "SELECT * FROM jobsfinder_users 
     WHERE user_email = :user_email";
     $pdo = connect();
@@ -46,8 +48,102 @@ function getUserByEmail(string $email) { // retourne les infos d'un user s'il ex
         'user_email' => $email
     ]);
 
-    return $stmtGetUserByEmail->fetch();
+    $user = $stmtGetUserByEmail->fetch();
+
+    return $user;
 }
+
+function getUserInfosFromUserId( // renvoie les infos d'un user en particulier à partir de son user id
+    // /!\ utilisable uniquement en admin
+    int $userId // => user_id
+    ) : array|false {
+
+        // si mauvais droit d'accès => renvoie le tableau vide
+        if($_SESSION['role'] !== "admin") { return []; };
+
+        $pdo = connect();
+        $SQLGetUserInfos = "SELECT * FROM jobsfinder_users 
+        WHERE user_id = :user_id";
+        $stmt = $pdo->prepare($SQLGetUserInfos);
+        $stmt->execute(['user_id' => $userId]);
+        return $stmt->fetch();
+}
+
+function getAllUsersInfos( // renvoie pour chaque user son id, email, dernière co et statut
+    ) : array {
+
+        // si mauvais droit d'accès => renvoie le tableau vide
+        if($_SESSION['role'] !== "admin") { return []; };
+
+        $SQLGetAllUsersInfos = "SELECT user_id, user_email, name, role, import_status, last_login_at FROM jobsfinder_users";
+        $pdo = connect();
+        // pas de param dynamique donc pas besoin de passer par un stmt
+        $users = $pdo->query($SQLGetAllUsersInfos)->fetchAll();
+
+        return $users;
+}
+
+function createNewUser( // tente de créer un user et renvoie le résultat de l'opé
+    string $newUserEmail, // => email du user qu'on tente de créer
+    ?string $newUserName = null // => null par défaut si non fourni
+    ) : bool|string {
+
+        // si mauvais droit d'accès => renvoie le tableau vide
+        if($_SESSION['role'] !== "admin") { return false; };
+
+        $pdo = connect();
+
+        // vérifie si le user n'existe pas déjà en base
+        $existingUser = getUserByEmail($newUserEmail);
+        if($existingUser) { return "existing_user"; }
+
+        $SQLCreateNewUser = "INSERT INTO jobsfinder_users 
+        (user_email, role, name, import_status) 
+        VALUES(:user_email, 'user', :name, 'done')";
+        $stmtCreateNewUser = $pdo->prepare($SQLCreateNewUser);
+        $stmtCreateNewUser->execute([
+            'user_email' => $newUserEmail, 
+            'name' => $newUserName
+        ]);
+
+        return true;
+}
+
+
+function updateLastLoginAtForUser( // met à jour en DB la date de dernière connexion user
+    int $userId // => user id
+    ) : bool {
+    $pdo = connect();
+    $nowFunction = NOW_FUNCTION;
+    $stmt = $pdo->prepare("
+        UPDATE jobsfinder_users 
+        SET last_login_at = {$nowFunction} 
+        WHERE user_id = ?
+    ");
+    return $stmt->execute([$userId]);
+}
+
+
+function setStatusForUser( // update le statut d'un compte utilisateur
+    string $id, // => user id
+    string $status // => statut à appliquer au user
+    ) : bool { 
+    $SQLsetStatusForUser = "UPDATE jobsfinder_users 
+    SET import_status = :import_status WHERE user_id = :id";
+    $pdo = connect();
+    try {
+        $stmtsetStatusForUser = $pdo->prepare($SQLsetStatusForUser);
+        $stmtsetStatusForUser->execute([
+            'id' => $id,
+            'import_status' => $status
+        ]);
+        return true;
+
+    } catch(Exception $e) {
+        return false;
+    };
+}
+
 
 /* Fonction(s) pour get des infos de la DB */
 
@@ -148,41 +244,6 @@ function changeURLInDBByUserId( // update le lien d'un fichier de suivi d'un use
         $stmtChangeReportingUrl->execute([
             'id' => $id,
             $mode => $url
-        ]);
-        return true;
-
-    } catch(Exception $e) {
-        return false;
-    };
-}
-
-
-function updateLastLoginAtForUser( // met à jour en DB la date de dernière connexion user
-    int $userId // => user id
-    ) : bool {
-    $pdo = connect();
-    $nowFunction = NOW_FUNCTION;
-    $stmt = $pdo->prepare("
-        UPDATE jobsfinder_users 
-        SET last_login_at = {$nowFunction} 
-        WHERE user_id = ?
-    ");
-    return $stmt->execute([$userId]);
-}
-
-
-function setStatusForUser( // update le statut d'un compte utilisateur
-    string $id, // => user id
-    string $status // => statut à appliquer au user
-    ): bool { 
-    $SQLsetStatusForUser = "UPDATE jobsfinder_users 
-    SET import_status = :import_status WHERE user_id = :id";
-    $pdo = connect();
-    try {
-        $stmtsetStatusForUser = $pdo->prepare($SQLsetStatusForUser);
-        $stmtsetStatusForUser->execute([
-            'id' => $id,
-            'import_status' => $status
         ]);
         return true;
 

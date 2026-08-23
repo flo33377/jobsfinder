@@ -16,7 +16,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 
-/* var_dump($_POST); */
+/* var_dump($_SESSION); */
 /* unset($_SESSION['user_id']); */
 /* session_destroy(); */
 
@@ -31,6 +31,12 @@ define("HOME", __DIR__ . "/content/home.php");
 
 // LOGIN = Formulaire d'auth
 define("LOGIN", __DIR__ . "/content/login.php");
+
+// USERS_LIST = Listing des users
+define("USERS_LIST", __DIR__ . "/content/users_list.php");
+
+// USER_FOCUS = Infos d'un seul user
+define("USER_FOCUS", __DIR__ . "/content/user_focus.php");
 
 // CV_STORAGE = Bibliothèque de CV
 define("CV_STORAGE", __DIR__ . "/content/cv_storage.php");
@@ -62,8 +68,12 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case "POST":
         if(!empty($_POST)) {
+            if(isset($_POST['post_add_user'])) {
+                $page = "add_user"; // input caché pour ajouter nouvelle expression
+            }
+
             if(isset($_POST['post_add_exp'])) {
-            $page = "add_expression"; // input caché pour ajouter nouvelle expression
+                $page = "add_expression"; // input caché pour ajouter nouvelle expression
             }
 
             if(isset($_POST['post_erase_exp_id']) && is_numeric($_POST['post_erase_exp_id'])) { // demande de suppression d'une exp
@@ -107,6 +117,22 @@ switch ($method) {
         && isset($_GET['error']) && ($_GET['error'] === 'no_account')) { // user n'existe pas en db
             $page = 'login';
             $error = 'no_account';
+        }
+
+        if(isset($_GET['mode']) && ($_GET['mode'] === "users_list") 
+        && !isset($_GET["user_id"])) { // listing des users (mode admin)
+            $page = "users_list" ;
+        }
+
+        if(isset($_GET['mode']) && ($_GET['mode'] === "users_list") 
+        && isset($_GET["user_id"])) { // affichage des données d'un user en particulier
+            $page = "user_focus" ;
+        }
+
+        if(isset($_GET['action']) && ($_GET['action'] === "admin_force_status_user") 
+        && !empty($_GET['pause'])) { // pause ou dé-pause un user depuis un compte admin
+            // si pause = true => pauser le compte // pause = false => réactiver
+            $page = "admin_force_status_user";
         }
 
         if(isset($_GET['mode']) && ($_GET['mode'] === "cv_storage")) { // accès à la biblio de cv
@@ -162,6 +188,12 @@ switch($page){
 
     case "home" : // cas par défaut => HP du site
         if(isset($_SESSION['user_id'])) {
+            if (!empty($_SESSION['notif_message'])) {
+                $server_notif_message = $_SESSION['notif_message'];
+                $server_notif_type = $_SESSION['notif_type'];
+                unset($_SESSION['notif_message']);
+                unset($_SESSION['notif_type']);
+            }
             $content = HOME;
             $allJobsArray = getAllJobsByUser($_SESSION['user_id']);
             $userKeywords = getKeywordsByUserId($_SESSION['user_id'], "key");
@@ -172,6 +204,162 @@ switch($page){
             // checker quand même ce cas particulier
             $content = LOGIN;
             $error = "forbidden_access";
+        }
+        break;
+    
+    case "users_list" : // accès à la page de listing des users
+        // mode admin uniquement
+        if($_SESSION['role'] !== "admin") {
+            // si pas de droit d'accès => erreur
+            $_SESSION['notif_message'] = "Vous n'avez pas le droit d'effectuer cette action.";
+            $_SESSION['notif_type'] = "error";
+            header('Location: ' . BASE_URL);
+            exit;
+        } else {
+            if (!empty($_SESSION['notif_message'])) {
+                $server_notif_message = $_SESSION['notif_message'];
+                $server_notif_type = $_SESSION['notif_type'];
+                unset($_SESSION['notif_message']);
+                unset($_SESSION['notif_type']);
+            }
+            $content = USERS_LIST;
+            $currentPage = "users_list";
+            $users_list = getAllUsersInfos();
+        }
+
+        break;
+    
+    case "add_user" : // créé un nouvel utilisateur
+        if($_SESSION['role'] !== "admin") {
+            // si pas les bons droits admin => erreur + renvoie sur home
+            $_SESSION['notif_message'] = "Vous n'avez pas le droit d'effectuer cette action.";
+            $_SESSION['notif_type'] = "error";
+            header('Location: ' . BASE_URL);
+            exit;
+        };
+        if(empty($_POST['add_user_email'])) {
+            // si add_user_email vide => erreur
+            $_SESSION['notif_message'] = "Vous ne pouvez pas entrer cet email pour créer un utilisateur.";
+            $_SESSION['notif_type'] = "error";
+            header('Location: ' . BASE_URL . "?mode=users_list");
+            exit;
+        }
+
+        // création du user
+        $userCreationAttempt = createNewUser($_POST['add_user_email'], $_POST['add_user_name']);
+        if($userCreationAttempt === "existing_user") {
+            // si user déjà en base
+            $_SESSION['notif_message'] = "Cet email est déjà associé à un utilisateur.";
+            $_SESSION['notif_type'] = "error";
+        } elseif($userCreationAttempt === true) {
+            // si création successfull
+            $_SESSION['notif_message'] = "Nouvel utilisateur créé";
+            $_SESSION['notif_type'] = "success";
+        }
+
+        header('Location: ' . BASE_URL . '?mode=users_list');
+        break;
+    
+    case "user_focus" : // accès aux données d'un seul user
+        // check accès uniquement en rôle admin
+        if($_SESSION['role'] !== "admin") {
+            // si pas de droit d'accès => erreur
+            $_SESSION['notif_message'] = "Vous n'avez pas le droit d'effectuer cette action.";
+            $_SESSION['notif_type'] = "error";
+            header('Location: ' . BASE_URL);
+            exit;
+        } else {
+            // si droit d'accès ok
+            if (!empty($_SESSION['notif_message'])) {
+                $server_notif_message = $_SESSION['notif_message'];
+                $server_notif_type = $_SESSION['notif_type'];
+                unset($_SESSION['notif_message']);
+                unset($_SESSION['notif_type']);
+            }
+            // affichage page + ciblage user
+            $content = USER_FOCUS;
+            $currentPage = "users_list";
+            $userId = $_GET['user_id'];
+            $user = getUserInfosFromUserId($userId);
+
+            // récup les infos concernant les offres pour ce user
+            $userOffers = getAllJobsByUser($_GET['user_id']);
+            $offersCount = count($userOffers);
+            $hiddenJobs = array_filter($userOffers, function($job) {
+                return $job['status'] === 'hidden';
+            });
+            $hiddenJobsCount = count($hiddenJobs);
+            $appliedJobs = array_filter($userOffers, function($job) {
+                return $job['status'] === 'applied';
+            });
+            $appliedJobsCount = count($appliedJobs);
+
+            // récup les infos de keywords pour ce user
+            $keywordsCounter = count(getKeywordsByUserId($_GET['user_id'], "key"));
+            $blacklistCounter = count(getKeywordsByUserId($_GET['user_id'], "blacklist"));
+
+            // récup les infos concernant l'espace CV pour ce user
+            $cvList = getCvListForUser($_GET['user_id']);
+            $cvStorage = getCvStorageForUser($_GET['user_id']);
+            $usedMo = round($cvStorage['totalSize'] / (1024 * 1024), 1);
+
+            if (!$user) {
+                // si user_id invalide ou inexistant => erreur
+                $_SESSION['notif_message'] = "Utilisateur introuvable.";
+                $_SESSION['notif_type'] = "error";
+                header('Location: ' . BASE_URL . '?mode=users_list');
+                exit;
+            }
+        }
+        break;
+    
+    case "admin_force_status_user" : // pause ou dé-pause d'un user depuis un compte admin
+        // si pause = true => suspendre user // pause = false => réactiver
+        if($_SESSION['role'] !== "admin") {
+            // si pas de droit d'accès => erreur
+            $_SESSION['notif_message'] = "Vous n'avez pas le droit d'effectuer cette action.";
+            $_SESSION['notif_type'] = "error";
+            header('Location: ' . BASE_URL);
+            exit;
+        } elseif(empty($_GET['user']) || !in_array($_GET['pause'], ['true', 'false'], true)) {
+            // si pas de user_id dans l'URL ou que pause vaut autre qu'un bool => erreur
+            $_SESSION['notif_message'] = "Lien cassé, action impossible.";
+            $_SESSION['notif_type'] = "error";
+            header('Location: ' . BASE_URL . "?mode=users_list");
+            exit;
+        } else {
+            // si tout ok => démarre l'action
+            $user = getUserInfosFromUserId($_GET['user']);
+            if(!$user) {
+                // si user n'existe pas en base => erreur
+                $_SESSION['notif_message'] = "Utilisateur introuvable.";
+                $_SESSION['notif_type'] = "error";
+                header('Location: ' . BASE_URL . "?mode=users_list");
+                exit;
+            }
+
+            $pause = $_GET['pause'] === "true";
+            if($pause) {
+                // pause le user
+                $forceStatusAttempt = setStatusForUser($_GET['user'], 'paused');
+            } else {
+                // réactive le user
+                $forceStatusAttempt = setStatusForUser($_GET['user'], 'done');
+            }
+
+            if($forceStatusAttempt) {
+                // action réussie
+                $_SESSION['notif_message'] = $pause ? "Utilisateur mis en pause" : "Utilisateur réactivé";
+                $_SESSION['notif_type'] = "success";
+                header('Location: ' . BASE_URL . "?mode=users_list&user_id=" . $_GET['user']);
+                exit;
+            } else {
+                // action échouée
+                $_SESSION['notif_message'] = "Une erreur s'est produite.";
+                $_SESSION['notif_type'] = "error";
+                header('Location: ' . BASE_URL . "?mode=users_list&user_id=" . $_GET['user']);
+                exit;
+            }
         }
         break;
     
@@ -336,8 +524,14 @@ switch($page){
             $_SESSION['notif_message'] = "Une erreur s'est produite, merci de ré-essayer.";
             $_SESSION['notif_type'] = "error";
         }
+        if(isset($_GET['origin']) && ($_GET['origin'] == "home")) {
+            header('Location: ' . BASE_URL );
+            exit;
+        } else {
         header('Location: ' . BASE_URL . '?mode=parameters');
         exit;
+        }
+        break;
 
     case "save_reporting_link" : // tentative de sauvegarde d'un lien de suivi des candidatures
         if(!filter_var($_POST['reporting_link'], FILTER_VALIDATE_URL)) {
@@ -383,6 +577,7 @@ switch($page){
         unset($_SESSION['oauth2state'], 
         $_SESSION['user_id'], 
         $_SESSION['user_email'], 
+        $_SESSION['role'], 
         $_SESSION['reporting_link'], 
         $_SESSION['cv_link']);
         header('Location: ' . BASE_URL);

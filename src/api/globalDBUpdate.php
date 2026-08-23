@@ -17,7 +17,7 @@ if ($userId === NULL) {
 try {
     $newOffersCount = globalDBUpdateForUser();
     
-    // Si l'import s'est bien déroulé, on remet le user en "active"
+    // Si l'import s'est bien déroulé, on remet le user en "done"
     // (couvre le cas où le compte était en pause et où l'utilisateur relance manuellement)
     setStatusForUser($userId, 'done');
     

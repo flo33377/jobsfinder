@@ -31,6 +31,7 @@ if ($user) {
     session_regenerate_id(true);
     $_SESSION['user_id'] = $user['user_id'];
     $_SESSION['user_email'] = $email;
+    $_SESSION['role'] = $user['role'] ?? NULL;
     $_SESSION['reporting_link'] = $user['reporting_link'] ?? NULL;
     $_SESSION['cv_link'] = $user['cv_link'] ?? NULL;
 

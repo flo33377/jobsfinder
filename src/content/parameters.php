@@ -81,7 +81,7 @@
             <div class="setting-info">
                 <p class="setting-label">Mise en pause : <?= $userIsPaused ? 'Activée' : 'Désactivée' ?></p>
             </div>
-            <a <?= $userIsPaused ? "href='" . BASE_URL . "?action=set_pause'" : ''?> 
+            <a <?= $userIsPaused ? "href='" . BASE_URL . "?action=unset_pause'" : "href='" . BASE_URL . "?action=set_pause'"?> 
             class="toggle <?= !$userIsPaused ? '' : 'active' ?>"
             <?= !$userIsPaused ? 'data-popup-id="pause_confirm_modal"' : '' ?>
             aria-label="<?= $userIsPaused ? 'Réactiver la recherche' : 'Mettre en pause' ?>">
